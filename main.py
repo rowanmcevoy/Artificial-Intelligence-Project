@@ -1,5 +1,4 @@
 #This is our main file
-import copy
 
 
 def main(textfile):
@@ -30,10 +29,10 @@ def main(textfile):
     # print ("test2")
     if templine == 'Moves\n':
         # print ("test")
-        playingBoard.find_moves(True, playingBoard.w_moves)
+        find_moves(playingBoard, True, playingBoard.w_moves)
         print(str(len(playingBoard.w_moves)))
 
-        playingBoard.find_moves(False, playingBoard.b_moves)
+        find_moves(playingBoard, False, playingBoard.b_moves)
         print(str(len(playingBoard.b_moves)))
 
     # elif templine == 'Massacre':
@@ -83,54 +82,52 @@ class Board(object):
         self.b_moves = {}
 
 
-    # a,b refers to the original coordinates
-    # x,y refers to the new coordinates
-    def generate_move(self, a, b, x, y):
-        tempKey = str(a) + str(b) + str(x) + str(y)
-        tempBoard = self
-        tempBoard.whiteToMove = not self.whiteToMove
-        # tempBoard.squares[x][y] = tempBoard.squares[a][b]
-        # tempBoard.squares[a][b] = Unoccupied()
-        return {tempKey: tempBoard}
+# a,b refers to the original coordinates
+# x,y refers to the new coordinates
+def generate_move(originalBoard, a, b, x, y):
+    tempKey = str(a) + str(b) + str(x) + str(y)
+    tempBoard = originalBoard
+    tempBoard.whiteToMove = not tempBoard.whiteToMove
+    # tempBoard.squares[x][y] = tempBoard.squares[a][b]
+    # tempBoard.squares[a][b] = Unoccupied()
+    return {tempKey: tempBoard}
 
-    def find_moves(self, isWhite, tempDict):
-        pieceColor = "BlackPiece"
-        if isWhite:
-            pieceColor = "WhitePiece"
-        for i in range(0,8):
-            for j in range(0,8):
-                if self.squares[i][j].getName() == pieceColor:
-                    # check left possible moves
-                    if (i - 1 >= 0):
-                        if (self.squares[i-1][j].getName() == "Unoccupied"):
-                            tempDict.update(self.generate_move(i, j, i-1, j))
-                        elif (i - 2 >= 0):
-                            if (self.squares[i-2][j].getName() == "Unoccupied"):
-                                tempDict.update(self.generate_move(i, j, i-2, j))
+def find_moves(tempBoard, isWhite, tempDict):
+    pieceColor = "BlackPiece"
+    if isWhite:
+        pieceColor = "WhitePiece"
 
-                    # check right possible moves
-                    if (i + 1 <= 7):
-                        if (self.squares[i+1][j].getName() == "Unoccupied"):
-                            tempDict.update(self.generate_move(i, j, i+1, j))
-                        elif (i + 2 <= 7):
-                            if (self.squares[i+2][j].getName() == "Unoccupied"):
-                                tempDict.update(self.generate_move(i, j, i+2, j))
-
-                    # check above possible moves
-                    if (j - 1 >= 0):
-                        if (self.squares[i][j-1].getName() == "Unoccupied"):
-                            tempDict.update(self.generate_move(i, j, i, j-1))
-                        elif (j - 2 >= 0):
-                            if (self.squares[i][j-2].getName() == "Unoccupied"):
-                                tempDict.update(self.generate_move(i, j, i, j-2))
-
-                    # check bottom possible moves
-                    if (j + 1 <= 7):
-                        if (self.squares[i][j+1].getName() == "Unoccupied"):
-                            tempDict.update(self.generate_move(i, j, i, j+1))
-                        elif (j + 2 <= 7):
-                            if (self.squares[i][j+2].getName() == "Unoccupied"):
-                                tempDict.update(self.generate_move(i, j, i, j+2))
+    for i in range(0,8):
+        for j in range(0,8):
+            if tempBoard.squares[i][j].getName() == pieceColor:
+                # check left possible moves
+                if (i - 1 >= 0):
+                    if (tempBoard.squares[i-1][j].getName() == "Unoccupied"):
+                        tempDict.update(generate_move(tempBoard, i, j, i-1, j))
+                    elif (i - 2 >= 0):
+                        if (tempBoard.squares[i-2][j].getName() == "Unoccupied"):
+                            tempDict.update(generate_move(tempBoard, i, j, i-2, j))
+                # check right possible moves
+                if (i + 1 <= 7):
+                    if (tempBoard.squares[i+1][j].getName() == "Unoccupied"):
+                        tempDict.update(generate_move(tempBoard, i, j, i+1, j))
+                    elif (i + 2 <= 7):
+                        if (tempBoard.squares[i+2][j].getName() == "Unoccupied"):
+                            tempDict.update(generate_move(tempBoard, i, j, i+2, j))
+                # check above possible moves
+                if (j - 1 >= 0):
+                    if (tempBoard.squares[i][j-1].getName() == "Unoccupied"):
+                        tempDict.update(generate_move(tempBoard, i, j, i, j-1))
+                    elif (j - 2 >= 0):
+                        if (tempBoard.squares[i][j-2].getName() == "Unoccupied"):
+                            tempDict.update(generate_move(tempBoard, i, j, i, j-2))
+                # check bottom possible moves
+                if (j + 1 <= 7):
+                    if (tempBoard.squares[i][j+1].getName() == "Unoccupied"):
+                        tempDict.update(generate_move(tempBoard, i, j, i, j+1))
+                    elif (j + 2 <= 7):
+                        if (tempBoard.squares[i][j+2].getName() == "Unoccupied"):
+                            tempDict.update(generate_move(tempBoard, i, j, i, j+2))
 
 
 
@@ -139,8 +136,6 @@ class Board(object):
 
 
 class Piece(object):
-    def __init__(self):
-        self.name = ""
     def getName(self): #gets name of piece, will be customized when inherited
         return "Piece"
 
@@ -148,7 +143,6 @@ class Piece(object):
 class WhitePiece(Piece):
     def getName(self):
         return "WhitePiece"
-
 
 
 class BlackPiece(Piece):
@@ -166,9 +160,9 @@ class Corner(Piece):
         return "Corner"
 
 
-class OutOfBounds(Piece):
-    def getName(self):
-        return "OOB"
+# class OutOfBounds(Piece):
+#     def getName(self):
+#         return "OOB"
 
 
-main("sample_files/move-sample-3.in")
+main("sample_files/move-sample-1.in")
