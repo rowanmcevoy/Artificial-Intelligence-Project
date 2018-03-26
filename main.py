@@ -56,9 +56,12 @@ class Board(object):
         for i in range(1,9): #creating buffer on left and right
             self.squares[i][0] = OutOfBounds()
             self.squares[i][9] = OutOfBounds()
+        self.whiteToMove = True
 
 
 class Piece(object):
+    def __init__(self):
+
     def getName(): #gets name of piece, will be customized when inherited
         return "Piece"
 
@@ -66,6 +69,7 @@ class Piece(object):
 class WhitePiece(Piece):
     def getName():
         return "WhitePiece"
+
 
 
 class BlackPiece(Piece):
