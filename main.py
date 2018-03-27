@@ -1,6 +1,5 @@
 #This is our main file
 
-
 def main(textfile):
     f = open(textfile, 'r')
 
@@ -15,13 +14,13 @@ def main(textfile):
                 temp = f.read(1)
 
             if temp == "-":
-                playingBoard.squares[i][j] = Unoccupied()
+                playingBoard.squares[i][j] = "-"
             elif temp == 'O':
-                playingBoard.squares[i][j] = WhitePiece()
+                playingBoard.squares[i][j] = "O"
             elif temp == '@':
-                playingBoard.squares[i][j] = BlackPiece()
+                playingBoard.squares[i][j] = "@"
             elif temp == 'X':
-                playingBoard.squares[i][j] = Corner()
+                playingBoard.squares[i][j] = "X"
 
     templine = f.readline()
     if templine == '\n':
@@ -34,9 +33,8 @@ def main(textfile):
 
         find_moves(playingBoard, False, playingBoard.b_moves)
         print(str(len(playingBoard.b_moves)))
-
-    # elif templine == 'Massacre':
-    #     return massacre(playingBoard)
+    elif templine == 'Massacre\n':
+        return massacre(playingBoard)
 
     f.close()
 
@@ -52,23 +50,70 @@ def main(textfile):
 
 # def moves(tempBoard):
 
-# asdasd
+
+"""This function calculate a sequence of legal moves for White pieces that, if
+carried out starting from the given board configuration, would lead to all
+Black pieces being eliminated. This sequence of moves is printed as a series
+of coordinate pairs."""
+def massacre(startBoard):
+    for d in range(2):
+        visited = {}
+        s = []
+        currMoves = ["0000"]
+        s.append(startBoard)
+
+        print("depth: " + str(d))
+
+        counter = 0
+
+        while (len(s) != 0):
+            tempBoard = s.pop()
+            for i in range(8):
+                print(tempBoard.squares[i][:])
+                print("")
+            if massacreCheck(tempBoard):
+                ##print solution
+                for i in currMoves:
+                    if (i == "0000"):
+                        continue
+                    print('(' + i[0] + ', ' + i[1] + ') -> (' + i[2] + ', ' + i[3] + ')')
+                return
+
+            # currMoves.pop()
+
+            if (tempBoard.depth < d):
+                if (tempBoard.squares not in visited):
+                    find_moves(tempBoard, True, tempBoard.w_moves)
+                    visited.add(tempBoard.squares)
+                if (len(tempBoard.w_moves) != 0):
+                    print("Size: " + str(len(tempBoard.w_moves.items())))
+                    key, value = tempBoard.w_moves.popitem()
+                    s.append(tempBoard)
+                    print("Size: " + str(len(tempBoard.w_moves.items())))
+                    s.append(value)
+                    currMoves.append(key)
+                    print(str(len(currMoves)))
+                    print(str(key))
+                else:
+                    currMoves.pop()
+            else:
+                currMoves.pop()
+            counter = counter + 1
 
 
-# This function calculate a sequence of legal moves for White pieces that, if
-# carried out starting from the given board configuration, would lead to all
-# Black pieces being eliminated. This sequence of moves is printed as a series
-# of coordinate pairs.
 
-
-# def massacre(tempBoard):
-# '(' + str(a) + ', ' + str(b) + ') -> (' \
-# + str(x) + ', ' + str(y) + ')'
+def massacreCheck(tempBoard):
+    for i in range(8):
+        for j in range(8):
+            if tempBoard.squares[i][j] == "@":
+                print("Not Solution!")
+                return False
+    return True
 
 
 class Board(object):
-    def __init__(self):
-        self.squares = [[Piece() for i in range(8)] for j in range(8)]
+    def __init__(self, depth = 0, runningMoves = []):
+        self.squares = [[" " for i in range(8)] for j in range(8)]
         # for j in range(8): #creating buffer on top and bottom
         #     self.squares[0][j] = OutOfBounds()
         #     self.squares[7][j] = OutOfBounds()
@@ -76,93 +121,163 @@ class Board(object):
         #     self.squares[i][0] = OutOfBounds()
         #     self.squares[i][9] = OutOfBounds()
         self.whiteToMove = True
-        # self.num_moves = self.moves()
-        # ADD COUNTING OF MOVES ^
         self.w_moves = {}
         self.b_moves = {}
 
+        self.depth = depth
+        # self.runningMoves = runningMoves
+
+    # def __deepcopy__(self, memo):
+    #     newCopy = type(self)()
+    #     newCopy.squares = deepcopy(self.squares, memo)
+    #     newCopy.whiteToMove = deepcopy(self.whiteToMove, memo)
+    #     newCopy.w_moves = deepcopy(self.w_moves, memo)
+    #     newCopy.b_moves = deepcopy(self.b_moves, memo)
+    #     newCopy.depth = deepcopy(self.depth, memo)
+    #     newCopy.runningMoves = deepcopy(self.runningMoves, memo)
+    #     return newCopy
 
 # a,b refers to the original coordinates
 # x,y refers to the new coordinates
 def generate_move(originalBoard, a, b, x, y):
     tempKey = str(a) + str(b) + str(x) + str(y)
-    tempBoard = originalBoard
-    tempBoard.whiteToMove = not tempBoard.whiteToMove
+    # tempBoard = deepcopy(originalBoard)
+
+
+    tempBoard = Board()
+    if originalBoard.whiteToMove:
+        tempBoard.whiteToMove = False
+    for i in range(8):
+        for j in range(8):
+            if originalBoard.squares[i][j] == "-":
+                tempBoard.squares[i][j] = "-"
+            elif originalBoard.squares[i][j] == "O":
+                tempBoard.squares[i][j] = "O"
+            elif originalBoard.squares[i][j] == "@":
+                tempBoard.squares[i][j] = "@"
+            elif originalBoard.squares[i][j] == "X":
+                tempBoard.squares[i][j] = "X"
+
+    tempBoard.squares[x][y] = tempBoard.squares[a][b]
+    tempBoard.squares[a][b] = "-"
+
+
+    # for i in originalBoard.runningMoves:
+    #     tempBoard.runningMoves.append(deepcopy(i))
+
+    # print(tempKey)
+
+    # tempBoard.runningMoves.append(tempKey)
+    tempBoard.depth = originalBoard.depth + 1
+
+    if (x-1 >= 0):
+        if (tempBoard.squares[x-1][y] == "@"):
+            if (x-2 >= 0):
+                if (tempBoard.squares[x-2][y] == "O" or \
+                tempBoard.squares[x-2][y] == "X"):
+                    tempBoard.squares[x-1][y] = "-"
+                    print("left")
+    if (x+1 <= 7):
+        if tempBoard.squares[x+1][y] == "@":
+            if (x+2 <= 0):
+                if tempBoard.squares[x+2][y] == "O" or \
+                tempBoard.squares[x+2][y] == "X":
+                    tempBoard.squares[x+1][y] = "-"
+                    print("right")
+    if (y-1 >= 0):
+        if tempBoard.squares[x][y-1] == "@":
+            if (y-2 >= 0):
+                if tempBoard.squares[x][y-2] == "O" or \
+                tempBoard.squares[x][y-2] == "X":
+                    tempBoard.squares[x][y-1] = "-"
+                    print("up")
+    if (y+1 <= 7):
+        if tempBoard.squares[x][y+1] == "@":
+            if (y+2 <= 7):
+                if tempBoard.squares[x][y+2] == "O" or \
+                tempBoard.squares[x][y+2] == "X":
+                    tempBoard.squares[x][y+1] = "-"
+                    print("down")
+
+
+
+    # tempBoard.whiteToMove = not tempBoard.whiteToMove
     # tempBoard.squares[x][y] = tempBoard.squares[a][b]
     # tempBoard.squares[a][b] = Unoccupied()
     return {tempKey: tempBoard}
 
 def find_moves(tempBoard, isWhite, tempDict):
-    pieceColor = "BlackPiece"
+    pieceColor = "@"
     if isWhite:
-        pieceColor = "WhitePiece"
+        pieceColor = "O"
 
     for i in range(0,8):
         for j in range(0,8):
-            if tempBoard.squares[i][j].getName() == pieceColor:
+            if tempBoard.squares[i][j] == pieceColor:
                 # check left possible moves
                 if (i - 1 >= 0):
-                    if (tempBoard.squares[i-1][j].getName() == "Unoccupied"):
+                    if (tempBoard.squares[i-1][j] == "-"):
                         tempDict.update(generate_move(tempBoard, i, j, i-1, j))
                     elif (i - 2 >= 0):
-                        if (tempBoard.squares[i-2][j].getName() == "Unoccupied"):
+                        if (tempBoard.squares[i-2][j] == "-"):
                             tempDict.update(generate_move(tempBoard, i, j, i-2, j))
+                            print("checkleft")
                 # check right possible moves
                 if (i + 1 <= 7):
-                    if (tempBoard.squares[i+1][j].getName() == "Unoccupied"):
+                    if (tempBoard.squares[i+1][j] == "-"):
                         tempDict.update(generate_move(tempBoard, i, j, i+1, j))
+                        print("checkright")
                     elif (i + 2 <= 7):
-                        if (tempBoard.squares[i+2][j].getName() == "Unoccupied"):
+                        if (tempBoard.squares[i+2][j] == "-"):
                             tempDict.update(generate_move(tempBoard, i, j, i+2, j))
+                            print("checkright2")
                 # check above possible moves
                 if (j - 1 >= 0):
-                    if (tempBoard.squares[i][j-1].getName() == "Unoccupied"):
+                    if (tempBoard.squares[i][j-1] == "-"):
                         tempDict.update(generate_move(tempBoard, i, j, i, j-1))
                     elif (j - 2 >= 0):
-                        if (tempBoard.squares[i][j-2].getName() == "Unoccupied"):
+                        if (tempBoard.squares[i][j-2] == "-"):
                             tempDict.update(generate_move(tempBoard, i, j, i, j-2))
+                            print("checkup")
                 # check bottom possible moves
                 if (j + 1 <= 7):
-                    if (tempBoard.squares[i][j+1].getName() == "Unoccupied"):
+                    if (tempBoard.squares[i][j+1] == "-"):
                         tempDict.update(generate_move(tempBoard, i, j, i, j+1))
                     elif (j + 2 <= 7):
-                        if (tempBoard.squares[i][j+2].getName() == "Unoccupied"):
+                        if (tempBoard.squares[i][j+2] == "-"):
                             tempDict.update(generate_move(tempBoard, i, j, i, j+2))
+                            print("checkdown")
 
 
 
-
-
-
-
-class Piece(object):
-    def getName(self): #gets name of piece, will be customized when inherited
-        return "Piece"
-
-
-class WhitePiece(Piece):
-    def getName(self):
-        return "WhitePiece"
-
-
-class BlackPiece(Piece):
-    def getName(self):
-        return "BlackPiece"
-
-
-class Unoccupied(Piece):
-    def getName(self):
-        return "Unoccupied"
-
-
-class Corner(Piece):
-    def getName(self):
-        return "Corner"
-
+# class Piece(object):
+#     def getName(self): #gets name of piece, will be customized when inherited
+#         return "Piece"
+#
+#
+# class WhitePiece(Piece):
+#     def getName(self):
+#         return "WhitePiece"
+#
+#
+# class BlackPiece(Piece):
+#     def getName(self):
+#         return "BlackPiece"
+#
+#
+# class Unoccupied(Piece):
+#     def getName(self):
+#         return "Unoccupied"
+#
+#
+# class Corner(Piece):
+#     def getName(self):
+#         return "Corner"
+#
 
 # class OutOfBounds(Piece):
 #     def getName(self):
 #         return "OOB"
 
 
-main("sample_files/move-sample-1.in")
+main("sample_files/massacre-sample-1.in")
