@@ -50,14 +50,19 @@ def main(textfile):
 
 # def moves(tempBoard):
 
+def boardToString(tempBoard):
+    tempString = ""
+    for i in range(8):
+        for j in range(8):
+            tempString += tempBoard.squares[i][j]
 
 """This function calculate a sequence of legal moves for White pieces that, if
 carried out starting from the given board configuration, would lead to all
 Black pieces being eliminated. This sequence of moves is printed as a series
 of coordinate pairs."""
 def massacre(startBoard):
-    for d in range(2):
-        visited = {}
+    for d in range(6):
+        visited = set()
         s = []
         currMoves = ["0000"]
         s.append(startBoard)
@@ -82,9 +87,9 @@ def massacre(startBoard):
             # currMoves.pop()
 
             if (tempBoard.depth < d):
-                if (tempBoard.squares not in visited):
+                if (boardToString(tempBoard) not in visited):
                     find_moves(tempBoard, True, tempBoard.w_moves)
-                    visited.add(tempBoard.squares)
+                    visited.add(boardToString(tempBoard))
                 if (len(tempBoard.w_moves) != 0):
                     print("Size: " + str(len(tempBoard.w_moves.items())))
                     key, value = tempBoard.w_moves.popitem()
@@ -99,7 +104,6 @@ def massacre(startBoard):
             else:
                 currMoves.pop()
             counter = counter + 1
-
 
 
 def massacreCheck(tempBoard):
@@ -176,28 +180,28 @@ def generate_move(originalBoard, a, b, x, y):
                 if (tempBoard.squares[x-2][y] == "O" or \
                 tempBoard.squares[x-2][y] == "X"):
                     tempBoard.squares[x-1][y] = "-"
-                    print("left")
+                    print("elimUp")
     if (x+1 <= 7):
         if tempBoard.squares[x+1][y] == "@":
             if (x+2 <= 0):
                 if tempBoard.squares[x+2][y] == "O" or \
                 tempBoard.squares[x+2][y] == "X":
                     tempBoard.squares[x+1][y] = "-"
-                    print("right")
+                    print("elimDown")
     if (y-1 >= 0):
         if tempBoard.squares[x][y-1] == "@":
             if (y-2 >= 0):
                 if tempBoard.squares[x][y-2] == "O" or \
                 tempBoard.squares[x][y-2] == "X":
                     tempBoard.squares[x][y-1] = "-"
-                    print("up")
+                    print("elimLeft")
     if (y+1 <= 7):
         if tempBoard.squares[x][y+1] == "@":
             if (y+2 <= 7):
                 if tempBoard.squares[x][y+2] == "O" or \
                 tempBoard.squares[x][y+2] == "X":
                     tempBoard.squares[x][y+1] = "-"
-                    print("down")
+                    print("elimRight")
 
 
 
@@ -218,35 +222,38 @@ def find_moves(tempBoard, isWhite, tempDict):
                 if (i - 1 >= 0):
                     if (tempBoard.squares[i-1][j] == "-"):
                         tempDict.update(generate_move(tempBoard, i, j, i-1, j))
+                        print("checkup")
                     elif (i - 2 >= 0):
                         if (tempBoard.squares[i-2][j] == "-"):
                             tempDict.update(generate_move(tempBoard, i, j, i-2, j))
-                            print("checkleft")
+                            print("checkdup2")
                 # check right possible moves
                 if (i + 1 <= 7):
                     if (tempBoard.squares[i+1][j] == "-"):
                         tempDict.update(generate_move(tempBoard, i, j, i+1, j))
-                        print("checkright")
+                        print("checkdown")
                     elif (i + 2 <= 7):
                         if (tempBoard.squares[i+2][j] == "-"):
                             tempDict.update(generate_move(tempBoard, i, j, i+2, j))
-                            print("checkright2")
+                            print("checkdown2")
                 # check above possible moves
                 if (j - 1 >= 0):
                     if (tempBoard.squares[i][j-1] == "-"):
                         tempDict.update(generate_move(tempBoard, i, j, i, j-1))
+                        print("checkleft")
                     elif (j - 2 >= 0):
                         if (tempBoard.squares[i][j-2] == "-"):
                             tempDict.update(generate_move(tempBoard, i, j, i, j-2))
-                            print("checkup")
+                            print("checkleft2")
                 # check bottom possible moves
                 if (j + 1 <= 7):
                     if (tempBoard.squares[i][j+1] == "-"):
                         tempDict.update(generate_move(tempBoard, i, j, i, j+1))
+                        print("checkright")
                     elif (j + 2 <= 7):
                         if (tempBoard.squares[i][j+2] == "-"):
                             tempDict.update(generate_move(tempBoard, i, j, i, j+2))
-                            print("checkdown")
+                            print("checkright2")
 
 
 
