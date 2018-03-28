@@ -1,41 +1,50 @@
 #This is our main file
 from copy import *
+import fileinput
 
-def main(textfile):
-    f = open(textfile, 'r')
-
+def main():
     #initializing board
     playingBoard = Board()
 
     #filling the board from textfile
-    for i in range(0,8):
-        for j in range(0,8):
-            temp = f.read(1)
-            if temp == " " or temp == '\n':
-                temp = f.read(1)
+    i = 0
+    for line in fileinput.input():
+        if line == 'Moves\n':
+            find_moves(playingBoard, True, playingBoard.w_moves)
+            print(str(len(playingBoard.w_moves)))
 
-            if temp == "-":
+            find_moves(playingBoard, False, playingBoard.b_moves)
+            print(str(len(playingBoard.b_moves)))
+            return
+        elif line == 'Massacre\n':
+            return massacre(playingBoard)
+        j = 0
+        for tempChar in line:
+
+            if tempChar == " " or tempChar == '\n':
+                continue
+            if tempChar == "-":
                 playingBoard.squares[i][j] = "-"
-            elif temp == 'O':
+            elif tempChar == 'O':
                 playingBoard.squares[i][j] = "O"
-            elif temp == '@':
+            elif tempChar == '@':
                 playingBoard.squares[i][j] = "@"
-            elif temp == 'X':
+            elif tempChar == 'X':
                 playingBoard.squares[i][j] = "X"
+            j += 1
+        i += 1
 
-    templine = f.readline()
-    if templine == '\n':
-        templine = f.readline()
-    if templine == 'Moves\n':
-        find_moves(playingBoard, True, playingBoard.w_moves)
-        print(str(len(playingBoard.w_moves)))
-
-        find_moves(playingBoard, False, playingBoard.b_moves)
-        print(str(len(playingBoard.b_moves)))
-    elif templine == 'Massacre\n':
-        return massacre(playingBoard)
-
-    f.close()
+    # templine = f.readline()
+    # if templine == '\n':
+    #     templine = f.readline()
+    # if templine == 'Moves\n':
+    #     find_moves(playingBoard, True, playingBoard.w_moves)
+    #     print(str(len(playingBoard.w_moves)))
+    #
+    #     find_moves(playingBoard, False, playingBoard.b_moves)
+    #     print(str(len(playingBoard.b_moves)))
+    # elif templine == 'Massacre\n':
+    #     return massacre(playingBoard)
 
 def boardToString(tempBoard):
     tempString = ""
@@ -129,6 +138,7 @@ def generate_move(originalBoard, a, b, x, y):
 
     tempBoard.depth = deepcopy(originalBoard.depth) + 1
 
+    #eliminating black pieces
     if (x-1 >= 0):
         if (tempBoard.squares[x-1][y] == "@"):
             if (x-2 >= 0):
@@ -151,6 +161,32 @@ def generate_move(originalBoard, a, b, x, y):
         if tempBoard.squares[x][y+1] == "@":
             if (y+2 <= 7):
                 if tempBoard.squares[x][y+2] == "O" or \
+                tempBoard.squares[x][y+2] == "X":
+                    tempBoard.squares[x][y+1] = "-"
+
+    #eliminating white pieces
+    if (x-1 >= 0):
+        if (tempBoard.squares[x-1][y] == "O"):
+            if (x-2 >= 0):
+                if (tempBoard.squares[x-2][y] == "@" or \
+                tempBoard.squares[x-2][y] == "X"):
+                    tempBoard.squares[x-1][y] = "-"
+    if (x+1 <= 7):
+        if tempBoard.squares[x+1][y] == "O":
+            if (x+2 <= 0):
+                if tempBoard.squares[x+2][y] == "@" or \
+                tempBoard.squares[x+2][y] == "X":
+                    tempBoard.squares[x+1][y] = "-"
+    if (y-1 >= 0):
+        if tempBoard.squares[x][y-1] == "O":
+            if (y-2 >= 0):
+                if tempBoard.squares[x][y-2] == "@" or \
+                tempBoard.squares[x][y-2] == "X":
+                    tempBoard.squares[x][y-1] = "-"
+    if (y+1 <= 7):
+        if tempBoard.squares[x][y+1] == "O":
+            if (y+2 <= 7):
+                if tempBoard.squares[x][y+2] == "@" or \
                 tempBoard.squares[x][y+2] == "X":
                     tempBoard.squares[x][y+1] = "-"
 
@@ -195,4 +231,4 @@ def find_moves(tempBoard, isWhite, tempDict):
 
 
 #Script
-main("sample_files/massacre-sample-3.in")
+main()
