@@ -34,18 +34,6 @@ def main():
             j += 1
         i += 1
 
-    # templine = f.readline()
-    # if templine == '\n':
-    #     templine = f.readline()
-    # if templine == 'Moves\n':
-    #     find_moves(playingBoard, True, playingBoard.w_moves)
-    #     print(str(len(playingBoard.w_moves)))
-    #
-    #     find_moves(playingBoard, False, playingBoard.b_moves)
-    #     print(str(len(playingBoard.b_moves)))
-    # elif templine == 'Massacre\n':
-    #     return massacre(playingBoard)
-
 def boardToString(tempBoard):
     tempString = ""
     for i in range(8):
@@ -58,7 +46,8 @@ carried out starting from the given board configuration, would lead to all
 Black pieces being eliminated. This sequence of moves is printed as a series
 of coordinate pairs."""
 def massacre(startBoard):
-    for d in range(6):
+    for d in range(8):
+        print ("checking depth: " + str(d))
         visited = set()
         s = []
         currMoves = ["0000"]
@@ -147,7 +136,7 @@ def generate_move(originalBoard, a, b, x, y):
                     tempBoard.squares[x-1][y] = "-"
     if (x+1 <= 7):
         if tempBoard.squares[x+1][y] == "@":
-            if (x+2 <= 0):
+            if (x+2 <= 7):
                 if tempBoard.squares[x+2][y] == "O" or \
                 tempBoard.squares[x+2][y] == "X":
                     tempBoard.squares[x+1][y] = "-"
@@ -166,29 +155,21 @@ def generate_move(originalBoard, a, b, x, y):
 
     #eliminating white pieces
     if (x-1 >= 0):
-        if (tempBoard.squares[x-1][y] == "O"):
-            if (x-2 >= 0):
-                if (tempBoard.squares[x-2][y] == "@" or \
-                tempBoard.squares[x-2][y] == "X"):
-                    tempBoard.squares[x-1][y] = "-"
-    if (x+1 <= 7):
-        if tempBoard.squares[x+1][y] == "O":
-            if (x+2 <= 0):
-                if tempBoard.squares[x+2][y] == "@" or \
-                tempBoard.squares[x+2][y] == "X":
-                    tempBoard.squares[x+1][y] = "-"
+        if (tempBoard.squares[x-1][y] == "@" or \
+        tempBoard.squares[x-1][y] == "X"):
+            if (x+1 <= 7):
+                if (tempBoard.squares[x+1][y] == "@" or \
+                tempBoard.squares[x+1][y] == "X"):
+                    tempBoard.squares[x][y] = "-"
+
     if (y-1 >= 0):
-        if tempBoard.squares[x][y-1] == "O":
-            if (y-2 >= 0):
-                if tempBoard.squares[x][y-2] == "@" or \
-                tempBoard.squares[x][y-2] == "X":
-                    tempBoard.squares[x][y-1] = "-"
-    if (y+1 <= 7):
-        if tempBoard.squares[x][y+1] == "O":
-            if (y+2 <= 7):
-                if tempBoard.squares[x][y+2] == "@" or \
-                tempBoard.squares[x][y+2] == "X":
-                    tempBoard.squares[x][y+1] = "-"
+        if (tempBoard.squares[x][y-1] == "@" or \
+        tempBoard.squares[x][y-1] == "X"):
+            if (y+1 <= 7):
+                if (tempBoard.squares[x][y+1] == "@" or \
+                tempBoard.squares[x][y+1] == "X"):
+                    tempBoard.squares[x][y] = "-"
+
 
     return {tempKey: tempBoard}
 
