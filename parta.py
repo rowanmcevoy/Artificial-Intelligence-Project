@@ -46,18 +46,16 @@ carried out starting from the given board configuration, would lead to all
 Black pieces being eliminated. This sequence of moves is printed as a series
 of coordinate pairs."""
 def massacre(startBoard):
-    for d in range(8):
+    for d in range(7):
         print ("checking depth: " + str(d))
         visited = set()
         s = []
         currMoves = ["0000"]
         s.append(startBoard)
 
-        counter = 0
-
         while (len(s) != 0):
             tempBoard = s.pop()
-            if (boardToString(tempBoard) not in visited):
+            if ((boardToString(tempBoard) + str(tempBoard.depth)) not in visited):
                 if massacreCheck(tempBoard):
                     #print solution
                     for i in currMoves:
@@ -68,9 +66,9 @@ def massacre(startBoard):
 
 
             if (tempBoard.depth < d):
-                if (boardToString(tempBoard) not in visited):
+                if ((boardToString(tempBoard) + str(tempBoard.depth)) not in visited):
                     find_moves(tempBoard, True, tempBoard.w_moves)
-                    visited.add(boardToString(tempBoard))
+                    visited.add(boardToString(tempBoard) + str(tempBoard.depth))
                 if (len(tempBoard.w_moves) != 0):
                     key, value = tempBoard.w_moves.popitem()
                     s.append(tempBoard)
@@ -80,7 +78,41 @@ def massacre(startBoard):
                     currMoves.pop()
             else:
                 currMoves.pop()
-            counter = counter + 1
+"""
+Recursive implementation of massacre, not useful for now
+
+"""
+# def recursiveHelper(tempBoard, depth, visited, correctPath):
+#     flag = True
+#     for i in range(8):
+#         for j in range(8):
+#             if tempBoard.squares[i][j] == "@":
+#                 # print("Not Solution!")
+#                 flag = False
+#     if (flag):
+#         return True
+#
+#     if (depth == 0 or boardToString(tempBoard) in visited):
+#         return False
+#
+#     find_moves(tempBoard, True, tempBoard.w_moves)
+#     newDepth = deepcopy(depth) - 1
+#     for key, move in tempBoard.w_moves.items():
+#         if (recursiveHelper(move, newDepth, visited, correctPath) == True):
+#             correctPath.insert(0,key)
+#             return True
+#     visited.add(boardToString(move) + str(depth))
+#     return False
+#
+# def recursiveMassacre(startBoard):
+#     for d in range(6):
+#         visited = set()
+#
+#         correctPath = []
+#         if (recursiveHelper(startBoard, d, visited, correctPath)):
+#             for i in correctPath:
+#                 print('(' + i[1] + ', ' + i[0] + ') -> (' + i[3] + ', ' + i[2] + ')')
+#             return
 
 
 def massacreCheck(tempBoard):
