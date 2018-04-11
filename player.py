@@ -1,4 +1,4 @@
-self"""
+"""
 Vinod Krishnamurthy and Rowan McEvoy
 COMP300024 Artificial Intelligence
 "Cali Boyz"
