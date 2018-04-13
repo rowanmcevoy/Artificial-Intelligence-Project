@@ -7,83 +7,11 @@ COMP300024 Artificial Intelligence
 
 #This is our main file
 from copy import *
-import fileinput
+import support_fnx_clss
+import random
 # import importlib
 #
 # importlib.import_module('support_fnx_clss.py')
-
-"""
-This function flattens the board 2d array into a hashable string.
-
-"""
-def boardToString(tempBoard):
-    tempString = ""
-    for i in range(8):
-        for j in range(8):
-            tempString += tempBoard.squares[i][j]
-    return tempString
-
-
-"""
-Board class definition.
-
-"""
-class Board(object):
-    def __init__(self, depth = 0, runningMoves = []):
-        self.squares = [[" " for i in range(8)] for j in range(8)]
-
-        # keeps track of whose turn it is (to be used later in project)
-        self.whiteToMove = True
-
-        # dictionary that stores possible white/black moves
-        self.w_moves = {}
-        self.b_moves = {}
-
-        self.depth = depth
-
-"""
-This functions finds all possible moves (either black or white) from a
-given board and adds them to the dictionary that is passed in. This function
-makes use of the generate_move to create the key-value pairs for the
-dictionary.
-
-"""
-def find_moves(tempBoard, isWhite, tempSet):
-    pieceColor = "@"
-    if isWhite:
-        pieceColor = "O"
-
-    for i in range(0,8):
-        for j in range(0,8):
-            if tempBoard.squares[i][j] == pieceColor:
-                # check possible moves above
-                if (i - 1 >= 0):
-                    if (tempBoard.squares[i-1][j] == "-"):
-                        tempSet.add((i, j), (i-1, j))
-                    elif (i - 2 >= 0):
-                        if (tempBoard.squares[i-2][j] == "-"):
-                            tempSet.add((i, j), (i-2, j))
-                # check possible moves below
-                if (i + 1 <= 7):
-                    if (tempBoard.squares[i+1][j] == "-"):
-                        tempSet.add((i, j), (i+1, j))
-                    elif (i + 2 <= 7):
-                        if (tempBoard.squares[i+2][j] == "-"):
-                            tempSet.add((i, j), (i+2, j))
-                # check possible moves left
-                if (j - 1 >= 0):
-                    if (tempBoard.squares[i][j-1] == "-"):
-                        tempSet.add((i, j), (i, j-1))
-                    elif (j - 2 >= 0):
-                        if (tempBoard.squares[i][j-2] == "-"):
-                            tempSet.add((i, j), (i, j-2))
-                # check possible moves right
-                if (j + 1 <= 7):
-                    if (tempBoard.squares[i][j+1] == "-"):
-                        tempSet.add((i, j), (i, j+1))
-                    elif (j + 2 <= 7):
-                        if (tempBoard.squares[i][j+2] == "-"):
-                            tempSet.add((i, j), (i, j+2))
 
 
 """
@@ -109,14 +37,21 @@ class Player(object):
         else:
             self.opp_colour = 'white'
 
-    def update (self, action, identity = 'white'):
+        self.moves = set()
+        self.turns = 0
 
-        a = action[0][0]
-        b = action[0][1]
-        c = action[1][0]
-        d = action[1][1]
-        self.squares[c][d] = self.squares[a][b]
-        self.squares[a][b] = "-"
+    def update (self, action, identity = 'noArg'):
+
+        if (identity == 'noArg'):
+            identity = self.opp_colour
+
+        if (self.turns >= 24):
+            self.squares[c][d] = self.squares[a][b]
+            self.squares[a][b] = "-"
+            (a,b), (c,d) = action
+        else:
+            (c, d) = action
+
 
         our_token = 'O'
         opp_token = '@'
@@ -124,7 +59,7 @@ class Player(object):
             our_token = '@'
             opp_token = 'O'
 
-        #eliminating black pieces
+        #eliminating opponent pieces
         if (c-1 >= 0):
             if (self.squares[c-1][d] == opp_token):
                 if (c-2 >= 0):
@@ -150,7 +85,7 @@ class Player(object):
                     self.squares[c][d+2] == "X":
                         self.squares[c][d+1] = "-"
 
-        #eliminating white pieces
+        #eliminating own pieces
         if (c-1 >= 0):
             if (self.squares[c-1][d] == opp_token or \
             self.squares[c-1][d] == "X"):
@@ -169,4 +104,32 @@ class Player(object):
 
 
     def action (self, turns):
-        pass
+
+        self.turns = turns
+
+        #placing stage
+        if self.turns < 24:
+            if (self.colour == 'white'):
+                while(True):
+                    x = random.randint(0,7)
+                    y = random.randint(0,5)
+                    if (self.squares[x][y] == '-'):
+                        self.squares[x][y] = 'O'
+                        self.update((x,y))
+                        break;
+            else:
+                while(True):
+                    x = random.randint(0,7)
+                    y = random.randint(2,7)
+                    if (self.squares[x][y] == '-'):
+                        self.squares[x][y] = '@'
+                        self.update((x,y), 'black')
+                        break;
+            self.turns = self.turns + 1
+            return (x,y)
+
+        #not placing stage
+        else:
+            find_moves(self.squares, self.colour == 'white', self.moves)
+            self.turns = self.turns + 1
+            return next(iter(moves))
