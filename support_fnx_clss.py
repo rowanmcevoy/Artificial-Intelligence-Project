@@ -4,10 +4,10 @@ from copy import *
 This function flattens the board 2d array into a hashable string.
 
 """
-def boardToString(tempBoard):
+def boardToString(tempBoard, edge):
     tempString = ""
-    for i in range(8):
-        for j in range(8):
+    for i in range(edge+1):
+        for j in range(edge+1):
             tempString += tempBoard.squares[i][j]
     return tempString
 
@@ -31,44 +31,50 @@ class Board(object):
 
 """
 This functions finds all possible moves (either black or white) from a
-given board and adds them to the dictionary that is passed in. This function
-makes use of the generate_move to create the key-value pairs for the
-dictionary.
+given board and adds them to the dictionary that is passed in.
 
 """
-def find_moves(tempBoard, isWhite, tempSet):
+def find_moves(tempBoard, isWhite, tempSet, edge):
     pieceColor = "@"
     if isWhite:
         pieceColor = "O"
 
-    for i in range(0,8):
-        for j in range(0,8):
-            if tempBoard.squares[i][j] == pieceColor:
-                # check possible moves above
-                if (i - 1 >= 0):
-                    if (tempBoard.squares[i-1][j] == "-"):
-                        tempSet.add((i, j), (i-1, j))
-                    elif (i - 2 >= 0):
-                        if (tempBoard.squares[i-2][j] == "-"):
-                            tempSet.add((i, j), (i-2, j))
-                # check possible moves below
-                if (i + 1 <= 7):
-                    if (tempBoard.squares[i+1][j] == "-"):
-                        tempSet.add((i, j), (i+1, j))
-                    elif (i + 2 <= 7):
-                        if (tempBoard.squares[i+2][j] == "-"):
-                            tempSet.add((i, j), (i+2, j))
+    for i in range(7-edge, edge+1):
+        for j in range(7-edge, edge+1):
+            if tempBoard[i][j] == pieceColor:
                 # check possible moves left
-                if (j - 1 >= 0):
-                    if (tempBoard.squares[i][j-1] == "-"):
-                        tempSet.add((i, j), (i, j-1))
-                    elif (j - 2 >= 0):
-                        if (tempBoard.squares[i][j-2] == "-"):
-                            tempSet.add((i, j), (i, j-2))
+                if (i - 1 >= 7 - edge):
+                    if (tempBoard[i-1][j] == "-"):
+                        tempSet.add(((i, j), (i-1, j)))
+                    elif (i - 2 >= 7 - edge):
+                        if (tempBoard[i-2][j] == "-"):
+                            tempSet.add(((i, j), (i-2, j)))
                 # check possible moves right
-                if (j + 1 <= 7):
-                    if (tempBoard.squares[i][j+1] == "-"):
-                        tempSet.add((i, j), (i, j+1))
-                    elif (j + 2 <= 7):
-                        if (tempBoard.squares[i][j+2] == "-"):
-                            tempSet.add((i, j), (i, j+2))
+                if (i + 1 <= edge):
+                    if (tempBoard[i+1][j] == "-"):
+                        tempSet.add(((i, j), (i+1, j)))
+                    elif (i + 2 <= edge):
+                        if (tempBoard[i+2][j] == "-"):
+                            tempSet.add(((i, j), (i+2, j)))
+                # check possible moves above
+                if (j - 1 >= 7 - edge):
+                    if (tempBoard[i][j-1] == "-"):
+                        tempSet.add(((i, j), (i, j-1)))
+                    elif (j - 2 >= 7 - edge):
+                        if (tempBoard[i][j-2] == "-"):
+                            tempSet.add(((i, j), (i, j-2)))
+                # check possible moves below
+                if (j + 1 <= edge):
+                    if (tempBoard[i][j+1] == "-"):
+                        tempSet.add(((i, j), (i, j+1)))
+                    elif (j + 2 <= edge):
+                        if (tempBoard[i][j+2] == "-"):
+                            tempSet.add(((i, j), (i, j+2)))
+
+def print_board(tempBoard):
+    tempString = ""
+    for row in range(0,8):
+        for col in range(0,8):
+            tempString = tempString + tempBoard[col][row] + ' '
+        tempString = tempString + "\n"
+    print(tempString)
