@@ -114,8 +114,9 @@ class TreeMove:
 
     # execute move, calculate heuristic, undo move
     def calc_h(self, board):
-        return (20*self.our_pieces(board) - 45*self.opp_pieces(board) \
-        - 4*self.our_corners(board) + 8*self.opp_corners(board)) \
+        return (50*self.our_pieces(board) - 100*self.opp_pieces(board) \
+        - 4*self.our_corners(board) + 8*self.opp_corners(board) \
+        + 2*self.dist_from_edge(board))
         # + 13*(self.surr_area_comp(board)))
 
     def our_pieces(self, board):
@@ -203,12 +204,21 @@ class TreeMove:
     def num_jumps(self, board):
         pass
 
+    def dist_from_edge(self, board):
+        counter = 0
+        for i in range(7-self.edge, self.edge+1):
+            for j in range(7-self.edge, self.edge+1):
+                if (board[i][j] == self.token):
+                    counter = counter + min((i-self.edge), (7-self.edge-i)) + min((j-self.edge), (7-self.edge-j))
+
+        return counter
+
     def mini(self, board, depth, alpha, beta):
         moves = {}
         find_moves(board, (self.opp_token == 'O'), moves, self.edge)
         currBestMove = None
         currBestVal = 1000
-        if depth < 4:
+        if depth < 2:
             counter = 0
             for move in sorted(moves, key=moves.get, reverse = True):
                 self.runningMoves.append(move)
@@ -224,7 +234,7 @@ class TreeMove:
                     return currBestVal
                 beta = min(beta, currBestVal)
 
-                if counter > 5:
+                if counter > 10:
                     break
                 counter = counter + 1
         else:
@@ -246,7 +256,7 @@ class TreeMove:
         find_moves(board, (self.opp_token == '@'), moves, self.edge)
         currBestMove = None
         currBestVal = -1000
-        if depth < 4:
+        if depth < 2:
             counter = 0
             for move in sorted(moves, key=moves.get, reverse = True):
                 self.runningMoves.append(move)
@@ -262,7 +272,7 @@ class TreeMove:
                     return currBestVal
                 alpha = max(alpha, currBestVal)
 
-                if counter > 5:
+                if counter > 10:
                     break
                 counter = counter + 1
         else:
@@ -297,9 +307,9 @@ class TreeMove:
                 currBestVal = tempVal
                 currBestMove = move
 
-            if counter > 5:
-                break
-            counter = counter + 1
+            # if counter > 20:
+            #     break
+            # counter = counter + 1
 
         return currBestMove
 
