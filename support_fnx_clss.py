@@ -1,4 +1,6 @@
 from copy import *
+from queue import PriorityQueue
+import operator
 
 """
 This function flattens the board 2d array into a hashable string.
@@ -34,7 +36,17 @@ This functions finds all possible moves (either black or white) from a
 given board and adds them to the dictionary that is passed in.
 
 """
-def find_moves(tempBoard, isWhite, tempSet, edge):
+def prioritize(board, x, y, edge):
+    counter = 0
+    for dx, dy in [(-1,-1), (-1,0), (-1,1), (0,-1), (0,1), (1,-1), (1,0), (1,1)]:
+        if ((x+dx in range(7-edge, edge+1)) and (y+dy in range(7-edge, edge+1))):
+            if (board[x+dx][y+dy] != '-'):
+                counter = counter + 1
+            elif (board[x+dx][y+dy] != '-'):
+                counter = counter + 1
+    return counter
+
+def find_moves(tempBoard, isWhite, tempDict, edge):
     pieceColor = "@"
     if isWhite:
         pieceColor = "O"
@@ -45,31 +57,31 @@ def find_moves(tempBoard, isWhite, tempSet, edge):
                 # check possible moves left
                 if (i - 1 >= 7 - edge):
                     if (tempBoard[i-1][j] == "-"):
-                        tempSet.add(((i, j), (i-1, j)))
+                        tempDict.update({((i, j), (i-1, j)): prioritize(tempBoard, i-1, j, edge)})
                     elif (i - 2 >= 7 - edge):
                         if (tempBoard[i-2][j] == "-"):
-                            tempSet.add(((i, j), (i-2, j)))
+                            tempDict.update({((i, j), (i-2, j)): prioritize(tempBoard, i-2, j, edge)})
                 # check possible moves right
                 if (i + 1 <= edge):
                     if (tempBoard[i+1][j] == "-"):
-                        tempSet.add(((i, j), (i+1, j)))
+                        tempDict.update({((i, j), (i+1, j)): prioritize(tempBoard, i+1, j, edge)})
                     elif (i + 2 <= edge):
                         if (tempBoard[i+2][j] == "-"):
-                            tempSet.add(((i, j), (i+2, j)))
+                            tempDict.update({((i, j), (i+2, j)): prioritize(tempBoard, i+2, j, edge)})
                 # check possible moves above
                 if (j - 1 >= 7 - edge):
                     if (tempBoard[i][j-1] == "-"):
-                        tempSet.add(((i, j), (i, j-1)))
+                        tempDict.update({((i, j), (i, j-1)): prioritize(tempBoard, i, j-1, edge)})
                     elif (j - 2 >= 7 - edge):
                         if (tempBoard[i][j-2] == "-"):
-                            tempSet.add(((i, j), (i, j-2)))
+                            tempDict.update({((i, j), (i, j-2)): prioritize(tempBoard, i, j-2, edge)})
                 # check possible moves below
                 if (j + 1 <= edge):
                     if (tempBoard[i][j+1] == "-"):
-                        tempSet.add(((i, j), (i, j+1)))
+                        tempDict.update({((i, j), (i, j+1)): prioritize(tempBoard, i, j+1, edge)})
                     elif (j + 2 <= edge):
                         if (tempBoard[i][j+2] == "-"):
-                            tempSet.add(((i, j), (i, j+2)))
+                            tempDict.update({((i, j), (i, j+2)): prioritize(tempBoard, i, j+2, edge)})
 
 def print_board(tempBoard):
     tempString = ""
@@ -79,39 +91,45 @@ def print_board(tempBoard):
         tempString = tempString + "\n"
     print(tempString)
 
-class QueueItem
-    def __init__(self, our_token, depth = 0, runningMoves = []):
-        self.depth = depth
-        self.runningMoves = runningMoves
-        self.heuristic = 0
+class Change:
+    def __init__(self, x, y, before):
+        self.x = x
+        self.y = y
+        self.before = before
+
+
+class TreeMove:
+    def __init__(self, our_token, edge):
+        # self.depth = depth
+        self.runningMoves = []
+        # self.heuristic = 0
         self.token = our_token
 
         self.opp_token = 'O'
         if (self.token == 'O'):
             self.opp_token = '@'
 
+        self.edge = edge
+        self.changes = []
+
     # execute move, calculate heuristic, undo move
     def calc_h(self, board):
+        return (20*self.our_pieces(board) - 45*self.opp_pieces(board) \
+        - 4*self.our_corners(board) + 8*self.opp_corners(board)) \
+        # + 13*(self.surr_area_comp(board)))
 
-        execute_moves(board, self.runningMoves)
-
-        self.heuristic = 20*self.own_pieces(board) - 18*self.opp_pieces(board) \
-        - 4*self.our_corners(board) + 4*self.opp_corners(board) \
-        + 7*self.surr_area_comp(board)
-
-        undo_moves(board, self.runningMoves)
     def our_pieces(self, board):
         counter = 0
-        for i in range(7-edge, edge+1):
-            for j in range(7-edge, edge+1):
+        for i in range(7 - self.edge, self.edge +1):
+            for j in range(7-self.edge, self.edge+1):
                 if (board[i][j] == self.token):
                     counter = counter + 1
         return counter
 
     def opp_pieces(self, board):
         counter = 0
-        for i in range(7-edge, edge+1):
-            for j in range(7-edge, edge+1):
+        for i in range(7-self.edge, self.edge+1):
+            for j in range(7-self.edge, self.edge+1):
                 if (board[i][j] == self.opp_token):
                     counter = counter + 1
         return counter
@@ -171,11 +189,11 @@ class QueueItem
     # surrounding area composition for all own pieces
     def surr_area_comp(self, board):
         counter = 0
-        for i in range(7-edge, edge+1):
-            for j in range(7-edge, edge+1):
+        for i in range(7-self.edge, self.edge+1):
+            for j in range(7-self.edge, self.edge+1):
                 if (board[i][j] == self.token):
                     for dx, dy in [(-1,-1), (-1,0), (-1,1), (0,-1), (0,1), (1,-1), (1,0), (1,1)]:
-                        if ((i+dx in range(7-edge, edge+1)) and (j+dy in range(7-edge, edge+1))):
+                        if ((i+dx in range(7-self.edge, self.edge+1)) and (j+dy in range(7-self.edge, self.edge+1))):
                             if (board[i+dx][j+dy] == self.token):
                                 counter = counter + 1
                             elif (board[i+dx][j+dy] == self.opp_token):
@@ -185,13 +203,180 @@ class QueueItem
     def num_jumps(self, board):
         pass
 
-# do minimax implementation here
-def choose_move(board, colour):
-    #create priority queue of moves
-    pass
+    def mini(self, board, depth, alpha, beta):
+        moves = {}
+        find_moves(board, (self.opp_token == 'O'), moves, self.edge)
+        currBestMove = None
+        currBestVal = 1000
+        if depth < 4:
+            counter = 0
+            for move in sorted(moves, key=moves.get, reverse = True):
+                self.runningMoves.append(move)
+                self.execute_moves(board)
+                tempVal = self.maxi(board,depth+1, alpha, beta)
+                self.undo_moves(board)
 
-def execute_moves(board, runningMoves):
-    pass
+                if tempVal < currBestVal:
+                    currBestVal = tempVal
+                    currBestMove = move
 
-def undo_moves(board, runningMoves):
-    pass
+                if (currBestVal <= alpha):
+                    return currBestVal
+                beta = min(beta, currBestVal)
+
+                if counter > 5:
+                    break
+                counter = counter + 1
+        else:
+            for move in moves:
+                self.runningMoves.append(move)
+                self.execute_moves(board)
+                tempVal = self.calc_h(board)
+                self.undo_moves(board)
+
+                if tempVal < currBestVal:
+                    currBestVal = tempVal
+                    currBestMove = move
+
+
+        return currBestVal
+
+    def maxi(self, board, depth, alpha, beta):
+        moves = {}
+        find_moves(board, (self.opp_token == '@'), moves, self.edge)
+        currBestMove = None
+        currBestVal = -1000
+        if depth < 4:
+            counter = 0
+            for move in sorted(moves, key=moves.get, reverse = True):
+                self.runningMoves.append(move)
+                self.execute_moves(board)
+                tempVal = self.mini(board,depth+1, alpha, beta)
+                self.undo_moves(board)
+
+                if tempVal > currBestVal:
+                    currBestVal = tempVal
+                    currBestMove = move
+
+                if (currBestVal >= beta):
+                    return currBestVal
+                alpha = max(alpha, currBestVal)
+
+                if counter > 5:
+                    break
+                counter = counter + 1
+        else:
+            for move in moves:
+                self.runningMoves.append(move)
+                self.execute_moves(board)
+                tempVal = self.calc_h(board)
+                self.undo_moves(board)
+
+                if tempVal > currBestVal:
+                    currBestVal = tempVal
+                    currBestMove = move
+
+        return currBestVal
+
+    # do minimax implementation here
+    def choose_move(self, board, colour):
+        #create priority queue of moves
+        moves = {}
+        find_moves(board, (colour == 'white'), moves, self.edge)
+        currBestMove = None
+        currBestVal = -1000
+        counter = 0
+        for move in sorted(moves, key=moves.get, reverse = True):
+            # print(move)
+            self.runningMoves.append(move)
+            self.execute_moves(board)
+            tempVal = self.mini(board, 1, -float("inf"), float("inf"))
+            self.undo_moves(board)
+
+            if tempVal > currBestVal:
+                currBestVal = tempVal
+                currBestMove = move
+
+            if counter > 5:
+                break
+            counter = counter + 1
+
+        return currBestMove
+
+
+    def execute_moves(self, board):
+        tempChanges = []
+        usToMove = True
+        if len(self.runningMoves) != 0:
+            (a,b), (c,d) = self.runningMoves[len(self.runningMoves)-1]
+            if (usToMove):
+                our_token = self.token
+                opp_token = self.opp_token
+            else :
+                opp_token = self.token
+                our_token = self.opp_token
+            # (a,b), (c,d) = move
+            tempChanges.append(Change(c,d,board[c][d]))
+            board[c][d] = board[a][b]
+            tempChanges.append(Change(a,b,board[a][b]))
+            board[a][b] = "-"
+
+            #eliminating opponent pieces
+            if (c-1 >= 7 - self.edge):
+                if (board[c-1][d] == opp_token):
+                    if (c-2 >= 7 - self.edge):
+                        if (board[c-2][d] == our_token or \
+                        board[c-2][d] == "X"):
+                            tempChanges.append(Change(c-1,d,board[c-1][d]))
+                            board[c-1][d] = "-"
+            if (c+1 <= self.edge):
+                if board[c+1][d] == opp_token:
+                    if (c+2 <= self.edge):
+                        if board[c+2][d] == our_token or \
+                        board[c+2][d] == "X":
+                            tempChanges.append(Change(c+1,d,board[c+1][d]))
+                            board[c+1][d] = "-"
+            if (d-1 >= 7 - self.edge):
+                if board[c][d-1] == opp_token:
+                    if (d-2 >= 7 - self.edge):
+                        if board[c][d-2] == our_token or \
+                        board[c][d-2] == "X":
+                            tempChanges.append(Change(c,d-1,board[c][d-1]))
+                            board[c][d-1] = "-"
+            if (d+1 <= self.edge):
+                if board[c][d+1] == opp_token:
+                    if (d+2 <= self.edge):
+                        if board[c][d+2] == our_token or \
+                        board[c][d+2] == "X":
+                            tempChanges.append(Change(c,d+1,board[c][d+1]))
+                            board[c][d+1] = "-"
+
+            #eliminating own pieces
+            if (c-1 >= 7 - self.edge):
+                if (board[c-1][d] == opp_token or \
+                board[c-1][d] == "X"):
+                    if (c+1 <= self.edge):
+                        if (board[c+1][d] == opp_token or \
+                        board[c+1][d] == "X"):
+                            tempChanges.append(Change(c,d,board[c][d]))
+                            board[c][d] = "-"
+            if (d-1 >= 7 - self.edge):
+                if (board[c][d-1] == opp_token or \
+                board[c][d-1] == "X"):
+                    if (d+1 <= self.edge):
+                        if (board[c][d+1] == opp_token or \
+                        board[c][d+1] == "X"):
+                            tempChanges.append(Change(c,d,board[c][d]))
+                            board[c][d] = "-"
+            usToMove = not(usToMove)
+        self.changes.append(tempChanges)
+
+    def undo_moves(self, board):
+        tempChanges = self.changes.pop()
+        change_length = len(tempChanges)
+        while change_length > 0:
+            x = tempChanges[change_length-1].x
+            y = tempChanges[change_length-1].y
+            before = tempChanges[change_length-1].before
+            board[x][y] = before
+            change_length = change_length - 1

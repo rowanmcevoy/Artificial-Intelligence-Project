@@ -37,7 +37,7 @@ class Player(object):
         else:
             self.opp_colour = 'white'
 
-        self.moves = set()
+        # self.moves = set()
         self.turns = 0
         self.numPlacements = 0
 
@@ -166,6 +166,12 @@ class Player(object):
 
     def action (self, turns):
 
+        our_token = 'O'
+        opp_token = '@'
+        if (self.colour == 'black'):
+            our_token = '@'
+            opp_token = 'O'
+
         self.turns = turns
 
         #placing stage
@@ -194,10 +200,16 @@ class Player(object):
 
         #moving stage
         else:
-            self.moves.clear()
-            find_moves(self.squares, self.colour == 'white', self.moves,
-                self.edge)
-            our_move = self.moves.pop()
+            # self.moves.clear()
+            # find_moves(self.squares, self.colour == 'white', self.moves,
+            #     self.edge)
+            our_tree = TreeMove(our_token, self.edge)
+            our_move = our_tree.choose_move(self.squares, self.colour)
             self.update(our_move, self.colour)
+            # print("our pieces: " + str(temp.our_pieces(self.squares)))
+            # print("opp pieces: " + str(temp.opp_pieces(self.squares)))
+            # print("our corners: " + str(temp.our_corners(self.squares)))
+            # print("opp corners: " + str(temp.opp_corners(self.squares)))
+            # print("surroundings: " + str(temp.surr_area_comp(self.squares)))
             # print_board(self.squares)
             return our_move
