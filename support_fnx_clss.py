@@ -2,6 +2,9 @@ from copy import *
 from queue import PriorityQueue
 import operator
 
+black_cffs = [10, -25, -4, 4, 2, 13, 10, 20]
+white_cffs = [25, -10, -4, 4, 2, 13, 10, 20]
+
 """
 This function flattens the board 2d array into a hashable string.
 
@@ -132,10 +135,16 @@ class TreeMove:
                                 tempDict.update({((i, j), (i, j+2)): self.calc_priority(tempBoard, i, j, i, j+2)})
 
     def calc_h(self, board):
-        return (50*self.our_pieces(board) - 100*self.opp_pieces(board) \
-        - 4*self.our_corners(board) + 8*self.opp_corners(board) \
-        + 2*self.dist_from_edge(board))
-        # + 13*(self.surr_area_comp(board)))
+        if (self.token == 'O'):
+            return (white_cffs[0]*self.our_pieces(board) + white_cffs[1]*self.opp_pieces(board) \
+            + white_cffs[2]*self.our_corners(board) + white_cffs[3]*self.opp_corners(board) \
+            + white_cffs[4]*self.dist_from_edge(board))
+            # + white_cffs[5]*(self.surr_area_comp(board)))
+        else:
+            return (black_cffs[0]*self.our_pieces(board) + black_cffs[1]*self.opp_pieces(board) \
+            + black_cffs[2]*self.our_corners(board) + black_cffs[3]*self.opp_corners(board) \
+            + black_cffs[4]*self.dist_from_edge(board))
+            # + black_cffs[5]*(self.surr_area_comp(board)))
 
     def our_pieces(self, board):
         counter = 0
@@ -235,8 +244,8 @@ class TreeMove:
         moves = {}
         self.find_moves(board, (self.opp_token == 'O'), moves)
         currBestMove = None
-        currBestVal = 10000
-        if depth < 2:
+        currBestVal = float("inf")
+        if depth < 3:
             counter = 0
             for move in sorted(moves, key=moves.get, reverse = False):
                 self.runningMoves.append(move)
@@ -244,7 +253,7 @@ class TreeMove:
                 tempVal = self.maxi(board,depth+1, alpha, beta)
                 self.undo_moves(board)
 
-                if tempVal < currBestVal:
+                if (tempVal < currBestVal) or (currBestMove == None):
                     currBestVal = tempVal
                     currBestMove = move
 
@@ -273,8 +282,8 @@ class TreeMove:
         moves = {}
         self.find_moves(board, (self.opp_token == '@'), moves)
         currBestMove = None
-        currBestVal = -10000
-        if depth < 2:
+        currBestVal = -float("inf")
+        if depth < 3:
             counter = 0
             for move in sorted(moves, key=moves.get, reverse = True):
                 self.runningMoves.append(move)
@@ -282,7 +291,7 @@ class TreeMove:
                 tempVal = self.mini(board,depth+1, alpha, beta)
                 self.undo_moves(board)
 
-                if tempVal > currBestVal:
+                if (tempVal > currBestVal) or (currBestMove == None):
                     currBestVal = tempVal
                     currBestMove = move
 
@@ -312,7 +321,7 @@ class TreeMove:
         moves = {}
         self.find_moves(board, (colour == 'white'), moves)
         currBestMove = None
-        currBestVal = -10000
+        currBestVal = -float("inf")
         counter = 0
         for move in sorted(moves, key=moves.get, reverse = True):
             # print(move)
@@ -321,13 +330,13 @@ class TreeMove:
             tempVal = self.mini(board, 1, -float("inf"), float("inf"))
             self.undo_moves(board)
 
-            if tempVal > currBestVal:
+            if (tempVal > currBestVal) or (currBestMove == None):
                 currBestVal = tempVal
                 currBestMove = move
 
-            # if counter > 20:
-            #     break
-            # counter = counter + 1
+            if counter > 10:
+                break
+            counter = counter + 1
 
         return currBestMove
 
@@ -433,7 +442,11 @@ def choose_placement(board, colour):
     return currBestPlacement
 
 def placement_value(board, token, x, y):
-    return 10*dist_from_edge(x, y) + 20*surr_area_comp(board, token, x, y)
+    if (token == 'O'):
+        return white_cffs[6]*dist_from_edge(x, y) + white_cffs[7]*surr_area_comp(board, token, x, y)
+    else:
+        return black_cffs[6]*dist_from_edge(x, y) + black_cffs[7]*surr_area_comp(board, token, x, y)
+
 
 def dist_from_edge(x, y):
     return (min((7-x), x) + min((7-y), y))
