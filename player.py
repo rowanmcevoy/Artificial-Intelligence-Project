@@ -98,6 +98,12 @@ class Player(object):
 
     def update (self, action, identity = 'noArg'):
 
+        if action == None:
+            self.turns = self.turns + 1
+            if (self.turns in [128, 192]):
+                self.shrinkBoard()
+            return
+
         if (identity == 'noArg'):
             identity = self.opp_colour
 
@@ -176,27 +182,30 @@ class Player(object):
 
         #placing stage
         if (self.numPlacements != 24):
-            if (self.colour == 'white'):
-                while(True):
-                    col = random.randint(0,7)
-                    row = random.randint(0,5)
-                    if (self.squares[col][row] == '-'):
-                        self.squares[col][row] = 'O'
-                        self.update((col,row), 'white')
-                        break
-                    else:
-                        continue
-            else:
-                while(True):
-                    col = random.randint(0,7)
-                    row = random.randint(2,7)
-                    if (self.squares[col][row] == '-'):
-                        self.squares[col][row] = '@'
-                        self.update((col,row), 'black')
-                        break
-                    else:
-                        continue
-            return (col,row)
+            # if (self.colour == 'white'):
+            #     while(True):
+            #         col = random.randint(0,7)
+            #         row = random.randint(0,5)
+            #         if (self.squares[col][row] == '-'):
+            #             self.squares[col][row] = 'O'
+            #             self.update((col,row), 'white')
+            #             break
+            #         else:
+            #             continue
+            # else:
+            #     while(True):
+            #         col = random.randint(0,7)
+            #         row = random.randint(2,7)
+            #         if (self.squares[col][row] == '-'):
+            #             self.squares[col][row] = '@'
+            #             self.update((col,row), 'black')
+            #             break
+            #         else:
+            #             continue
+            # return (col,row)
+            our_move = choose_placement(self.squares, self.colour)
+            self.update(our_move, self.colour)
+            return our_move
 
         #moving stage
         else:

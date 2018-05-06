@@ -201,7 +201,7 @@ class Player(object):
         else:
 
             moves = {}
-            find_moves(self.squares, self.colour == 'white', moves,
+            all_moves(self.squares, self.colour == 'white', moves,
                  self.edge)
             # dict_length = len(moves)
             # our_move = list(moves.items())[random(dict_length)][0]
@@ -218,3 +218,40 @@ class Player(object):
             # print("surroundings: " + str(temp.surr_area_comp(self.squares)))
             # print_board(self.squares)
             return our_move
+
+def all_moves(tempBoard, isWhite, tempDict, edge):
+    pieceColor = "@"
+    if isWhite:
+        pieceColor = "O"
+
+    for i in range(7-edge, edge+1):
+        for j in range(7-edge, edge+1):
+            if tempBoard[i][j] == pieceColor:
+                # check possible moves left
+                if (i - 1 >= 7 - edge):
+                    if (tempBoard[i-1][j] == "-"):
+                        tempDict.update({((i, j), (i-1, j)): 0})
+                    elif (i - 2 >= 7 - edge):
+                        if (tempBoard[i-2][j] == "-"):
+                            tempDict.update({((i, j), (i-2, j)): 0})
+                # check possible moves right
+                if (i + 1 <= edge):
+                    if (tempBoard[i+1][j] == "-"):
+                        tempDict.update({((i, j), (i+1, j)): 0})
+                    elif (i + 2 <= edge):
+                        if (tempBoard[i+2][j] == "-"):
+                            tempDict.update({((i, j), (i+2, j)): 0})
+                # check possible moves above
+                if (j - 1 >= 7 - edge):
+                    if (tempBoard[i][j-1] == "-"):
+                        tempDict.update({((i, j), (i, j-1)): 0})
+                    elif (j - 2 >= 7 - edge):
+                        if (tempBoard[i][j-2] == "-"):
+                            tempDict.update({((i, j), (i, j-2)): 0})
+                # check possible moves below
+                if (j + 1 <= edge):
+                    if (tempBoard[i][j+1] == "-"):
+                        tempDict.update({((i, j), (i, j+1)): 0})
+                    elif (j + 2 <= edge):
+                        if (tempBoard[i][j+2] == "-"):
+                            tempDict.update({((i, j), (i, j+2)): 0})

@@ -46,43 +46,6 @@ def prioritize(board, x, y, edge):
                 counter = counter + 1
     return counter
 
-def find_moves(tempBoard, isWhite, tempDict, edge):
-    pieceColor = "@"
-    if isWhite:
-        pieceColor = "O"
-
-    for i in range(7-edge, edge+1):
-        for j in range(7-edge, edge+1):
-            if tempBoard[i][j] == pieceColor:
-                # check possible moves left
-                if (i - 1 >= 7 - edge):
-                    if (tempBoard[i-1][j] == "-"):
-                        tempDict.update({((i, j), (i-1, j)): prioritize(tempBoard, i-1, j, edge)})
-                    elif (i - 2 >= 7 - edge):
-                        if (tempBoard[i-2][j] == "-"):
-                            tempDict.update({((i, j), (i-2, j)): prioritize(tempBoard, i-2, j, edge)})
-                # check possible moves right
-                if (i + 1 <= edge):
-                    if (tempBoard[i+1][j] == "-"):
-                        tempDict.update({((i, j), (i+1, j)): prioritize(tempBoard, i+1, j, edge)})
-                    elif (i + 2 <= edge):
-                        if (tempBoard[i+2][j] == "-"):
-                            tempDict.update({((i, j), (i+2, j)): prioritize(tempBoard, i+2, j, edge)})
-                # check possible moves above
-                if (j - 1 >= 7 - edge):
-                    if (tempBoard[i][j-1] == "-"):
-                        tempDict.update({((i, j), (i, j-1)): prioritize(tempBoard, i, j-1, edge)})
-                    elif (j - 2 >= 7 - edge):
-                        if (tempBoard[i][j-2] == "-"):
-                            tempDict.update({((i, j), (i, j-2)): prioritize(tempBoard, i, j-2, edge)})
-                # check possible moves below
-                if (j + 1 <= edge):
-                    if (tempBoard[i][j+1] == "-"):
-                        tempDict.update({((i, j), (i, j+1)): prioritize(tempBoard, i, j+1, edge)})
-                    elif (j + 2 <= edge):
-                        if (tempBoard[i][j+2] == "-"):
-                            tempDict.update({((i, j), (i, j+2)): prioritize(tempBoard, i, j+2, edge)})
-
 def print_board(tempBoard):
     tempString = ""
     for row in range(0,8):
@@ -113,6 +76,61 @@ class TreeMove:
         self.changes = []
 
     # execute move, calculate heuristic, undo move
+
+    def prioritize(self, board, x, y):
+        counter = 0
+        for dx, dy in [(-1,-1), (-1,0), (-1,1), (0,-1), (0,1), (1,-1), (1,0), (1,1)]:
+            if ((x+dx in range(7-self.edge, self.edge+1)) and (y+dy in range(7-self.edge, self.edge+1))):
+                if (board[x+dx][y+dy] != '-'):
+                    counter = counter + 1
+                elif (board[x+dx][y+dy] != '-'):
+                    counter = counter + 1
+        return counter
+
+    def calc_priority(self, board, a, b, c, d):
+        self.runningMoves.append(((a,b),(c,d)))
+        self.execute_moves(board)
+        tempVal = self.calc_h(board)
+        self.undo_moves(board)
+        return tempVal
+
+    def find_moves(self, tempBoard, isWhite, tempDict):
+        pieceColor = "@"
+        if isWhite:
+            pieceColor = "O"
+
+        for i in range(7-self.edge, self.edge+1):
+            for j in range(7-self.edge, self.edge+1):
+                if tempBoard[i][j] == pieceColor:
+                    # check possible moves left
+                    if (i - 1 >= 7 - self.edge):
+                        if (tempBoard[i-1][j] == "-"):
+                            tempDict.update({((i, j), (i-1, j)): self.calc_priority(tempBoard, i, j, i-1, j)})
+                        elif (i - 2 >= 7 - self.edge):
+                            if (tempBoard[i-2][j] == "-"):
+                                tempDict.update({((i, j), (i-2, j)): self.calc_priority(tempBoard, i, j, i-2, j)})
+                    # check possible moves right
+                    if (i + 1 <= self.edge):
+                        if (tempBoard[i+1][j] == "-"):
+                            tempDict.update({((i, j), (i+1, j)): self.calc_priority(tempBoard, i, j, i+1, j)})
+                        elif (i + 2 <= self.edge):
+                            if (tempBoard[i+2][j] == "-"):
+                                tempDict.update({((i, j), (i+2, j)): self.calc_priority(tempBoard, i, j, i+2, j)})
+                    # check possible moves above
+                    if (j - 1 >= 7 - self.edge):
+                        if (tempBoard[i][j-1] == "-"):
+                            tempDict.update({((i, j), (i, j-1)): self.calc_priority(tempBoard, i, j, i, j-1)})
+                        elif (j - 2 >= 7 - self.edge):
+                            if (tempBoard[i][j-2] == "-"):
+                                tempDict.update({((i, j), (i, j-2)): self.calc_priority(tempBoard, i, j, i, j-2)})
+                    # check possible moves below
+                    if (j + 1 <= self.edge):
+                        if (tempBoard[i][j+1] == "-"):
+                            tempDict.update({((i, j), (i, j+1)): self.calc_priority(tempBoard, i, j, i, j+1)})
+                        elif (j + 2 <= self.edge):
+                            if (tempBoard[i][j+2] == "-"):
+                                tempDict.update({((i, j), (i, j+2)): self.calc_priority(tempBoard, i, j, i, j+2)})
+
     def calc_h(self, board):
         return (50*self.our_pieces(board) - 100*self.opp_pieces(board) \
         - 4*self.our_corners(board) + 8*self.opp_corners(board) \
@@ -215,12 +233,12 @@ class TreeMove:
 
     def mini(self, board, depth, alpha, beta):
         moves = {}
-        find_moves(board, (self.opp_token == 'O'), moves, self.edge)
+        self.find_moves(board, (self.opp_token == 'O'), moves)
         currBestMove = None
-        currBestVal = 1000
+        currBestVal = 10000
         if depth < 2:
             counter = 0
-            for move in sorted(moves, key=moves.get, reverse = True):
+            for move in sorted(moves, key=moves.get, reverse = False):
                 self.runningMoves.append(move)
                 self.execute_moves(board)
                 tempVal = self.maxi(board,depth+1, alpha, beta)
@@ -253,9 +271,9 @@ class TreeMove:
 
     def maxi(self, board, depth, alpha, beta):
         moves = {}
-        find_moves(board, (self.opp_token == '@'), moves, self.edge)
+        self.find_moves(board, (self.opp_token == '@'), moves)
         currBestMove = None
-        currBestVal = -1000
+        currBestVal = -10000
         if depth < 2:
             counter = 0
             for move in sorted(moves, key=moves.get, reverse = True):
@@ -292,9 +310,9 @@ class TreeMove:
     def choose_move(self, board, colour):
         #create priority queue of moves
         moves = {}
-        find_moves(board, (colour == 'white'), moves, self.edge)
+        self.find_moves(board, (colour == 'white'), moves)
         currBestMove = None
-        currBestVal = -1000
+        currBestVal = -10000
         counter = 0
         for move in sorted(moves, key=moves.get, reverse = True):
             # print(move)
@@ -383,6 +401,7 @@ class TreeMove:
 
     def undo_moves(self, board):
         tempChanges = self.changes.pop()
+        self.runningMoves.pop()
         change_length = len(tempChanges)
         while change_length > 0:
             x = tempChanges[change_length-1].x
@@ -390,3 +409,45 @@ class TreeMove:
             before = tempChanges[change_length-1].before
             board[x][y] = before
             change_length = change_length - 1
+
+
+def choose_placement(board, colour):
+    currBestVal = -1000
+    currBestPlacement = None
+    if (colour == 'white'):
+        for x in range(0,8):
+            for y in range(0,6):
+                if (board[x][y] == '-'):
+                    tempVal = placement_value(board, 'O', x, y)
+                    if tempVal > currBestVal:
+                        currBestVal = tempVal
+                        currBestPlacement = (x,y)
+    else:
+        for x in range(0,8):
+            for y in range(2,8):
+                if (board[x][y] == '-'):
+                    tempVal = placement_value(board, '@', x, y)
+                    if tempVal > currBestVal:
+                        currBestVal = tempVal
+                        currBestPlacement = (x,y)
+    return currBestPlacement
+
+def placement_value(board, token, x, y):
+    return 10*dist_from_edge(x, y) + 20*surr_area_comp(board, token, x, y)
+
+def dist_from_edge(x, y):
+    return (min((7-x), x) + min((7-y), y))
+
+def surr_area_comp(board, token, x, y):
+    opp_token = 'O'
+    if token == 'O':
+        opp_token = '@'
+
+    counter = 0
+    for dx, dy in [(-1,-1), (-1,0), (-1,1), (0,-1), (0,1), (1,-1), (1,0), (1,1)]:
+        if ((x+dx in range(0, 8)) and (y+dy in range(0, 8))):
+            if (board[x+dx][y+dy] == token):
+                counter = counter + 1
+            elif (board[x+dx][y+dy] == opp_token):
+                counter = counter - 1
+    return counter
