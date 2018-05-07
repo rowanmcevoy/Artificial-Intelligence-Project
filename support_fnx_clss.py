@@ -1,9 +1,8 @@
 from copy import *
-from queue import PriorityQueue
 import operator
 
-black_cffs = [10, -25, -4, 4, 2, 13, 10, 20]
-white_cffs = [25, -10, -4, 4, 2, 13, 10, 20]
+black_cffs = [25, -15, -4, 4, 2, 3, 10, 5, -100, 75, -75]
+white_cffs = [25, -15, -4, 4, 2, 3, 10, 5, -100, 75, -75]
 
 """
 This function flattens the board 2d array into a hashable string.
@@ -65,7 +64,7 @@ class Change:
 
 
 class TreeMove:
-    def __init__(self, our_token, edge):
+    def __init__(self, our_token, edge, our_locs, opp_locs):
         # self.depth = depth
         self.runningMoves = []
         # self.heuristic = 0
@@ -78,7 +77,22 @@ class TreeMove:
         self.edge = edge
         self.changes = []
 
+        self.our_locs = our_locs
+        self.opp_locs = opp_locs
+
     # execute move, calculate heuristic, undo move
+
+    def removePiece(self, token, x, y):
+        if (token == self.token):
+            self.our_locs.discard((x,y))
+        else:
+            self.opp_locs.discard((x,y))
+
+    def addPiece(self, token, x, y):
+        if (token == self.token):
+            self.our_locs.add((x,y))
+        else:
+            self.opp_locs.add((x,y))
 
     def prioritize(self, board, x, y):
         counter = 0
@@ -102,65 +116,58 @@ class TreeMove:
         if isWhite:
             pieceColor = "O"
 
-        for i in range(7-self.edge, self.edge+1):
-            for j in range(7-self.edge, self.edge+1):
-                if tempBoard[i][j] == pieceColor:
-                    # check possible moves left
-                    if (i - 1 >= 7 - self.edge):
-                        if (tempBoard[i-1][j] == "-"):
-                            tempDict.update({((i, j), (i-1, j)): self.calc_priority(tempBoard, i, j, i-1, j)})
-                        elif (i - 2 >= 7 - self.edge):
-                            if (tempBoard[i-2][j] == "-"):
-                                tempDict.update({((i, j), (i-2, j)): self.calc_priority(tempBoard, i, j, i-2, j)})
-                    # check possible moves right
-                    if (i + 1 <= self.edge):
-                        if (tempBoard[i+1][j] == "-"):
-                            tempDict.update({((i, j), (i+1, j)): self.calc_priority(tempBoard, i, j, i+1, j)})
-                        elif (i + 2 <= self.edge):
-                            if (tempBoard[i+2][j] == "-"):
-                                tempDict.update({((i, j), (i+2, j)): self.calc_priority(tempBoard, i, j, i+2, j)})
-                    # check possible moves above
-                    if (j - 1 >= 7 - self.edge):
-                        if (tempBoard[i][j-1] == "-"):
-                            tempDict.update({((i, j), (i, j-1)): self.calc_priority(tempBoard, i, j, i, j-1)})
-                        elif (j - 2 >= 7 - self.edge):
-                            if (tempBoard[i][j-2] == "-"):
-                                tempDict.update({((i, j), (i, j-2)): self.calc_priority(tempBoard, i, j, i, j-2)})
-                    # check possible moves below
-                    if (j + 1 <= self.edge):
-                        if (tempBoard[i][j+1] == "-"):
-                            tempDict.update({((i, j), (i, j+1)): self.calc_priority(tempBoard, i, j, i, j+1)})
-                        elif (j + 2 <= self.edge):
-                            if (tempBoard[i][j+2] == "-"):
-                                tempDict.update({((i, j), (i, j+2)): self.calc_priority(tempBoard, i, j, i, j+2)})
+        toCheck = set()
+        if (pieceColor == self.token):
+            toCheck = self.our_locs
+        else:
+            toCheck = self.opp_locs
+
+        for (i,j) in toCheck:
+            # check possible moves left
+            if (i - 1 >= 7 - self.edge):
+                if (tempBoard[i-1][j] == "-"):
+                    tempDict.update({((i, j), (i-1, j)): self.calc_priority(tempBoard, i, j, i-1, j)})
+                elif (i - 2 >= 7 - self.edge):
+                    if (tempBoard[i-2][j] == "-"):
+                        tempDict.update({((i, j), (i-2, j)): self.calc_priority(tempBoard, i, j, i-2, j)})
+            # check possible moves right
+            if (i + 1 <= self.edge):
+                if (tempBoard[i+1][j] == "-"):
+                    tempDict.update({((i, j), (i+1, j)): self.calc_priority(tempBoard, i, j, i+1, j)})
+                elif (i + 2 <= self.edge):
+                    if (tempBoard[i+2][j] == "-"):
+                        tempDict.update({((i, j), (i+2, j)): self.calc_priority(tempBoard, i, j, i+2, j)})
+            # check possible moves above
+            if (j - 1 >= 7 - self.edge):
+                if (tempBoard[i][j-1] == "-"):
+                    tempDict.update({((i, j), (i, j-1)): self.calc_priority(tempBoard, i, j, i, j-1)})
+                elif (j - 2 >= 7 - self.edge):
+                    if (tempBoard[i][j-2] == "-"):
+                        tempDict.update({((i, j), (i, j-2)): self.calc_priority(tempBoard, i, j, i, j-2)})
+            # check possible moves below
+            if (j + 1 <= self.edge):
+                if (tempBoard[i][j+1] == "-"):
+                    tempDict.update({((i, j), (i, j+1)): self.calc_priority(tempBoard, i, j, i, j+1)})
+                elif (j + 2 <= self.edge):
+                    if (tempBoard[i][j+2] == "-"):
+                        tempDict.update({((i, j), (i, j+2)): self.calc_priority(tempBoard, i, j, i, j+2)})
+
 
     def calc_h(self, board):
         if (self.token == 'O'):
             return (white_cffs[0]*self.our_pieces(board) + white_cffs[1]*self.opp_pieces(board) \
             + white_cffs[2]*self.our_corners(board) + white_cffs[3]*self.opp_corners(board) \
-            + white_cffs[4]*self.dist_from_edge(board))
-            # + white_cffs[5]*(self.surr_area_comp(board)))
+            + white_cffs[4]*self.dist_from_edge(board)) #+ white_cffs[5]*(self.surr_area_comp(board)))
         else:
             return (black_cffs[0]*self.our_pieces(board) + black_cffs[1]*self.opp_pieces(board) \
             + black_cffs[2]*self.our_corners(board) + black_cffs[3]*self.opp_corners(board) \
-            + black_cffs[4]*self.dist_from_edge(board))
-            # + black_cffs[5]*(self.surr_area_comp(board)))
+            + black_cffs[4]*self.dist_from_edge(board)) #+ black_cffs[5]*(self.surr_area_comp(board)))
 
     def our_pieces(self, board):
-        counter = 0
-        for i in range(7 - self.edge, self.edge +1):
-            for j in range(7-self.edge, self.edge+1):
-                if (board[i][j] == self.token):
-                    counter = counter + 1
-        return counter
+        return len(self.our_locs)
 
     def opp_pieces(self, board):
-        counter = 0
-        for i in range(7-self.edge, self.edge+1):
-            for j in range(7-self.edge, self.edge+1):
-                if (board[i][j] == self.opp_token):
-                    counter = counter + 1
-        return counter
+        return len(self.opp_locs)
 
     #number of own pieces adjacent to corners
     def our_corners(self, board):
@@ -217,15 +224,13 @@ class TreeMove:
     # surrounding area composition for all own pieces
     def surr_area_comp(self, board):
         counter = 0
-        for i in range(7-self.edge, self.edge+1):
-            for j in range(7-self.edge, self.edge+1):
-                if (board[i][j] == self.token):
-                    for dx, dy in [(-1,-1), (-1,0), (-1,1), (0,-1), (0,1), (1,-1), (1,0), (1,1)]:
-                        if ((i+dx in range(7-self.edge, self.edge+1)) and (j+dy in range(7-self.edge, self.edge+1))):
-                            if (board[i+dx][j+dy] == self.token):
-                                counter = counter + 1
-                            elif (board[i+dx][j+dy] == self.opp_token):
-                                counter = counter - 1
+        for (i,j) in self.our_locs:
+            for dx, dy in [(-1,-1), (-1,0), (-1,1), (0,-1), (0,1), (1,-1), (1,0), (1,1)]:
+                if ((i+dx in range(7-self.edge, self.edge+1)) and (j+dy in range(7-self.edge, self.edge+1))):
+                    if (board[i+dx][j+dy] == self.token):
+                        counter = counter + 1
+                    elif (board[i+dx][j+dy] == self.opp_token):
+                        counter = counter - 1
         return counter
 
     def num_jumps(self, board):
@@ -233,10 +238,8 @@ class TreeMove:
 
     def dist_from_edge(self, board):
         counter = 0
-        for i in range(7-self.edge, self.edge+1):
-            for j in range(7-self.edge, self.edge+1):
-                if (board[i][j] == self.token):
-                    counter = counter + min((i-self.edge), (7-self.edge-i)) + min((j-self.edge), (7-self.edge-j))
+        for (i,j) in self.our_locs:
+            counter = counter + min((i-self.edge), (7-self.edge-i)) + min((j-self.edge), (7-self.edge-j))
 
         return counter
 
@@ -316,7 +319,7 @@ class TreeMove:
         return currBestVal
 
     # do minimax implementation here
-    def choose_move(self, board, colour):
+    def choose_move(self, board, colour, dontChoose = None):
         #create priority queue of moves
         moves = {}
         self.find_moves(board, (colour == 'white'), moves)
@@ -325,10 +328,13 @@ class TreeMove:
         counter = 0
         for move in sorted(moves, key=moves.get, reverse = True):
             # print(move)
-            self.runningMoves.append(move)
-            self.execute_moves(board)
-            tempVal = self.mini(board, 1, -float("inf"), float("inf"))
-            self.undo_moves(board)
+            if (move == dontChoose):
+                tempVal = -float("inf")
+            else:
+                self.runningMoves.append(move)
+                self.execute_moves(board)
+                tempVal = self.mini(board, 1, -float("inf"), float("inf"))
+                self.undo_moves(board)
 
             if (tempVal > currBestVal) or (currBestMove == None):
                 currBestVal = tempVal
@@ -343,19 +349,21 @@ class TreeMove:
 
     def execute_moves(self, board):
         tempChanges = []
-        usToMove = True
         if len(self.runningMoves) != 0:
             (a,b), (c,d) = self.runningMoves[len(self.runningMoves)-1]
-            if (usToMove):
+            if (len(self.runningMoves)%2 == 1):
                 our_token = self.token
                 opp_token = self.opp_token
-            else :
+            else:
                 opp_token = self.token
                 our_token = self.opp_token
             # (a,b), (c,d) = move
             tempChanges.append(Change(c,d,board[c][d]))
+            self.addPiece(our_token, c, d)
             board[c][d] = board[a][b]
+
             tempChanges.append(Change(a,b,board[a][b]))
+            self.removePiece(our_token, a, b)
             board[a][b] = "-"
 
             #eliminating opponent pieces
@@ -365,6 +373,7 @@ class TreeMove:
                         if (board[c-2][d] == our_token or \
                         board[c-2][d] == "X"):
                             tempChanges.append(Change(c-1,d,board[c-1][d]))
+                            self.removePiece(opp_token, c-1, d)
                             board[c-1][d] = "-"
             if (c+1 <= self.edge):
                 if board[c+1][d] == opp_token:
@@ -372,6 +381,7 @@ class TreeMove:
                         if board[c+2][d] == our_token or \
                         board[c+2][d] == "X":
                             tempChanges.append(Change(c+1,d,board[c+1][d]))
+                            self.removePiece(opp_token, c+1, d)
                             board[c+1][d] = "-"
             if (d-1 >= 7 - self.edge):
                 if board[c][d-1] == opp_token:
@@ -379,6 +389,7 @@ class TreeMove:
                         if board[c][d-2] == our_token or \
                         board[c][d-2] == "X":
                             tempChanges.append(Change(c,d-1,board[c][d-1]))
+                            self.removePiece(opp_token, c, d-1)
                             board[c][d-1] = "-"
             if (d+1 <= self.edge):
                 if board[c][d+1] == opp_token:
@@ -386,6 +397,7 @@ class TreeMove:
                         if board[c][d+2] == our_token or \
                         board[c][d+2] == "X":
                             tempChanges.append(Change(c,d+1,board[c][d+1]))
+                            self.removePiece(opp_token, c, d+1)
                             board[c][d+1] = "-"
 
             #eliminating own pieces
@@ -396,6 +408,7 @@ class TreeMove:
                         if (board[c+1][d] == opp_token or \
                         board[c+1][d] == "X"):
                             tempChanges.append(Change(c,d,board[c][d]))
+                            self.removePiece(our_token, c, d)
                             board[c][d] = "-"
             if (d-1 >= 7 - self.edge):
                 if (board[c][d-1] == opp_token or \
@@ -404,8 +417,9 @@ class TreeMove:
                         if (board[c][d+1] == opp_token or \
                         board[c][d+1] == "X"):
                             tempChanges.append(Change(c,d,board[c][d]))
+                            self.removePiece(our_token, c, d)
                             board[c][d] = "-"
-            usToMove = not(usToMove)
+
         self.changes.append(tempChanges)
 
     def undo_moves(self, board):
@@ -416,8 +430,13 @@ class TreeMove:
             x = tempChanges[change_length-1].x
             y = tempChanges[change_length-1].y
             before = tempChanges[change_length-1].before
+            if (before == '-'):
+                self.removePiece(board[x][y], x, y)
+            else:
+                self.addPiece(before, x, y)
             board[x][y] = before
             change_length = change_length - 1
+
 
 
 def choose_placement(board, colour):
@@ -443,9 +462,16 @@ def choose_placement(board, colour):
 
 def placement_value(board, token, x, y):
     if (token == 'O'):
-        return white_cffs[6]*dist_from_edge(x, y) + white_cffs[7]*surr_area_comp(board, token, x, y)
+        return white_cffs[6]*dist_from_edge(x, y) + white_cffs[7]*surr_area_comp(board, token, x, y) \
+        + white_cffs[8]*our_pieces_eliminated(board, token, x, y) \
+        + white_cffs[9]*opp_pieces_eliminated(board, token, x, y) \
+        + white_cffs[10]*threats(board, token, x, y)
+
     else:
-        return black_cffs[6]*dist_from_edge(x, y) + black_cffs[7]*surr_area_comp(board, token, x, y)
+        return black_cffs[6]*dist_from_edge(x, y) + black_cffs[7]*surr_area_comp(board, token, x, y) \
+        + black_cffs[8]*our_pieces_eliminated(board, token, x, y) \
+        + black_cffs[9]*opp_pieces_eliminated(board, token, x, y) \
+        + black_cffs[10]*threats(board, token, x, y)
 
 
 def dist_from_edge(x, y):
@@ -463,4 +489,88 @@ def surr_area_comp(board, token, x, y):
                 counter = counter + 1
             elif (board[x+dx][y+dy] == opp_token):
                 counter = counter - 1
+    return counter
+
+def opp_pieces_eliminated(board, token, c, d):
+    our_token = token
+    opp_token = '@'
+    if (our_token == '@'):
+        opp_token = 'O'
+
+    counter = 0
+    if (c-1 >= 0):
+        if (board[c-1][d] == opp_token):
+            if (c-2 >= 0):
+                if (board[c-2][d] == our_token or \
+                board[c-2][d] == "X"):
+                    counter = counter + 1
+    if (c+1 <= 7):
+        if board[c+1][d] == opp_token:
+            if (c+2 <= 7):
+                if board[c+2][d] == our_token or \
+                board[c+2][d] == "X":
+                    counter = counter + 1
+    if (d-1 >= 0):
+        if board[c][d-1] == opp_token:
+            if (d-2 >= 0):
+                if board[c][d-2] == our_token or \
+                board[c][d-2] == "X":
+                    counter = counter + 1
+    if (d+1 <= 7):
+        if board[c][d+1] == opp_token:
+            if (d+2 <= 7):
+                if board[c][d+2] == our_token or \
+                board[c][d+2] == "X":
+                    counter = counter + 1
+    return counter
+
+def our_pieces_eliminated(board, token, c, d):
+    our_token = token
+    opp_token = '@'
+    if (our_token == '@'):
+        opp_token = 'O'
+
+    if (c-1 >= 0):
+        if (board[c-1][d] == opp_token or \
+        board[c-1][d] == "X"):
+            if (c+1 <= 7):
+                if (board[c+1][d] == opp_token or \
+                board[c+1][d] == "X"):
+                    return 1
+    if (d-1 >= 0):
+        if (board[c][d-1] == opp_token or \
+        board[c][d-1] == "X"):
+            if (d+1 <= 7):
+                if (board[c][d+1] == opp_token or \
+                board[c][d+1] == "X"):
+                    return 1
+    return 0
+
+def threats(board, token, c, d):
+    our_token = token
+    opp_token = '@'
+    if (our_token == '@'):
+        opp_token = 'O'
+
+    counter = 0
+    if (c-1 >= 0):
+        if (board[c-1][d] == opp_token):
+            if (c+1 <= 7):
+                if board[c+1][d] == '-':
+                    counter = counter + 1
+    if (c+1 <= 7):
+        if board[c+1][d] == opp_token:
+            if (c-1 >= 0):
+                if board[c-1][d] == '-':
+                    counter = counter + 1
+    if (d-1 >= 0):
+        if (board[c][d-1] == opp_token):
+            if (d+1 <= 7):
+                if board[c][d+1] == '-':
+                    counter = counter + 1
+    if (d+1 <= 7):
+        if board[c][d+1] == opp_token:
+            if (d-1 >= 0):
+                if board[c][d-1] == '-':
+                    counter = counter + 1
     return counter

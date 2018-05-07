@@ -42,12 +42,33 @@ class Player(object):
         self.numPlacements = 0
 
         self.edge = 7
+        self.our_locs = set()
+        self.opp_locs = set()
+
+        self.lastTen = [None]*10
+
+    def removePiece(self, token, x, y):
+        if ((token == 'O') and (self.colour == 'white')):
+            self.our_locs.discard((x,y))
+        elif((token == '@') and (self.colour == 'black')):
+            self.our_locs.discard((x,y))
+        else:
+            self.opp_locs.discard((x,y))
+
+    def addPiece(self, token, x, y):
+        if ((token == 'O') and (self.colour == 'white')):
+            self.our_locs.add((x,y))
+        elif((token == '@') and (self.colour == 'black')):
+            self.our_locs.add((x,y))
+        else:
+            self.opp_locs.add((x,y))
 
     def shrinkBoard(self):
 
         for i in range(7-self.edge, self.edge+1):
             for j in range(7-self.edge, self.edge+1):
                 if ((i in [self.edge, 7-self.edge]) or (j in [self.edge, 7-self.edge])):
+                    self.removePiece(self.squares[i][j], i, j)
                     self.squares[i][j] = 'N'
 
         if (self.edge == 6):
@@ -56,44 +77,60 @@ class Player(object):
             self.edge = 6
 
         #top left
+        if (self.squares[7-self.edge][7-self.edge] != '-'):
+            self.removePiece(self.squares[7-self.edge][7-self.edge], 7-self.edge, 7-self.edge)
         self.squares[7-self.edge][7-self.edge] = 'X'
         if (self.squares[7-self.edge+2][7-self.edge] != '-'):
             if (self.squares[7-self.edge+1][7-self.edge] !=
             self.squares[7-self.edge+2][7-self.edge]):
+                self.removePiece(self.squares[7-self.edge+1][7-self.edge], 7-self.edge+1, 7-self.edge)
                 self.squares[7-self.edge+1][7-self.edge] = '-'
         if (self.squares[7-self.edge][7-self.edge+2] != '-'):
             if (self.squares[7-self.edge][7-self.edge+1] !=
             self.squares[7-self.edge][7-self.edge+2]):
+                self.removePiece(self.squares[7-self.edge][7-self.edge+1], 7-self.edge, 7-self.edge+1)
                 self.squares[7-self.edge][7-self.edge+1] = '-'
         #bottom left
+        if (self.squares[7-self.edge][self.edge] != '-'):
+            self.removePiece(self.squares[7-self.edge][self.edge], 7-self.edge, self.edge)
         self.squares[7-self.edge][self.edge] = 'X'
         if (self.squares[7-self.edge+2][self.edge] != '-'):
             if (self.squares[7-self.edge+1][self.edge] !=
             self.squares[7-self.edge+2][self.edge]):
+                self.removePiece(self.squares[7-self.edge+1][self.edge], 7-self.edge+1, self.edge)
                 self.squares[7-self.edge+1][self.edge] = '-'
         if (self.squares[7-self.edge][self.edge-2] != '-'):
             if (self.squares[7-self.edge][self.edge-1] !=
             self.squares[7-self.edge][self.edge-2]):
+                self.removePiece(self.squares[7-self.edge][self.edge-1], 7-self.edge, self.edge-1)
                 self.squares[7-self.edge][self.edge-1] = '-'
         #bottom right
+        if (self.squares[self.edge][self.edge] != '-'):
+            self.removePiece(self.squares[self.edge][self.edge], self.edge, self.edge)
         self.squares[self.edge][self.edge] = 'X'
         if (self.squares[self.edge-2][self.edge] != '-'):
             if (self.squares[self.edge-1][self.edge] !=
             self.squares[self.edge-2][self.edge]):
+                self.removePiece(self.squares[self.edge-1][self.edge], self.edge-1, self.edge)
                 self.squares[self.edge-1][self.edge] = '-'
         if (self.squares[self.edge][self.edge-2] != '-'):
             if (self.squares[self.edge][self.edge-1] !=
             self.squares[self.edge][self.edge-2]):
+                self.removePiece(self.squares[self.edge][self.edge-1], self.edge, self.edge-1)
                 self.squares[self.edge][self.edge-1] = '-'
         #top right
+        if (self.squares[self.edge][7-self.edge] != '-'):
+            self.removePiece(self.squares[self.edge][7-self.edge], self.edge, 7-self.edge)
         self.squares[self.edge][7-self.edge] = 'X'
         if (self.squares[self.edge-2][7-self.edge] != '-'):
             if (self.squares[self.edge-1][7-self.edge] !=
             self.squares[self.edge-2][7-self.edge]):
+                self.removePiece(self.squares[self.edge-1][7-self.edge], self.edge-1, 7-self.edge)
                 self.squares[self.edge-1][7-self.edge] = '-'
         if (self.squares[self.edge][7-self.edge+2] != '-'):
             if (self.squares[self.edge][7-self.edge+1] !=
             self.squares[self.edge][7-self.edge+2]):
+                self.removePiece(self.squares[self.edge][7-self.edge+1], self.edge, 7-self.edge+1)
                 self.squares[self.edge][7-self.edge+1] = '-'
 
     def update (self, action, identity = 'noArg'):
@@ -117,10 +154,13 @@ class Player(object):
             (a,b), (c,d) = action
             self.squares[c][d] = self.squares[a][b]
             self.squares[a][b] = "-"
+            self.addPiece(our_token, c, d)
+            self.removePiece(our_token, a, b)
         else:
             self.numPlacements = self.numPlacements + 1
             (c, d) = action
             self.squares[c][d] = our_token
+            self.addPiece(our_token, c, d)
 
         #eliminating opponent pieces
         if (c-1 >= 7 - self.edge):
@@ -128,24 +168,28 @@ class Player(object):
                 if (c-2 >= 7 - self.edge):
                     if (self.squares[c-2][d] == our_token or \
                     self.squares[c-2][d] == "X"):
+                        self.removePiece(opp_token, c-1, d)
                         self.squares[c-1][d] = "-"
         if (c+1 <= self.edge):
             if self.squares[c+1][d] == opp_token:
                 if (c+2 <= self.edge):
                     if self.squares[c+2][d] == our_token or \
                     self.squares[c+2][d] == "X":
+                        self.removePiece(opp_token, c+1, d)
                         self.squares[c+1][d] = "-"
         if (d-1 >= 7 - self.edge):
             if self.squares[c][d-1] == opp_token:
                 if (d-2 >= 7 - self.edge):
                     if self.squares[c][d-2] == our_token or \
                     self.squares[c][d-2] == "X":
+                        self.removePiece(opp_token, c, d-1)
                         self.squares[c][d-1] = "-"
         if (d+1 <= self.edge):
             if self.squares[c][d+1] == opp_token:
                 if (d+2 <= self.edge):
                     if self.squares[c][d+2] == our_token or \
                     self.squares[c][d+2] == "X":
+                        self.removePiece(opp_token, c, d+1)
                         self.squares[c][d+1] = "-"
 
         #eliminating own pieces
@@ -155,6 +199,7 @@ class Player(object):
                 if (c+1 <= self.edge):
                     if (self.squares[c+1][d] == opp_token or \
                     self.squares[c+1][d] == "X"):
+                        self.removePiece(our_token, c, d)
                         self.squares[c][d] = "-"
         if (d-1 >= 7 - self.edge):
             if (self.squares[c][d-1] == opp_token or \
@@ -162,6 +207,7 @@ class Player(object):
                 if (d+1 <= self.edge):
                     if (self.squares[c][d+1] == opp_token or \
                     self.squares[c][d+1] == "X"):
+                        self.removePiece(our_token, c, d)
                         self.squares[c][d] = "-"
 
         self.turns = self.turns + 1
@@ -182,27 +228,6 @@ class Player(object):
 
         #placing stage
         if (self.numPlacements != 24):
-            # if (self.colour == 'white'):
-            #     while(True):
-            #         col = random.randint(0,7)
-            #         row = random.randint(0,5)
-            #         if (self.squares[col][row] == '-'):
-            #             self.squares[col][row] = 'O'
-            #             self.update((col,row), 'white')
-            #             break
-            #         else:
-            #             continue
-            # else:
-            #     while(True):
-            #         col = random.randint(0,7)
-            #         row = random.randint(2,7)
-            #         if (self.squares[col][row] == '-'):
-            #             self.squares[col][row] = '@'
-            #             self.update((col,row), 'black')
-            #             break
-            #         else:
-            #             continue
-            # return (col,row)
             our_move = choose_placement(self.squares, self.colour)
             self.update(our_move, self.colour)
             return our_move
@@ -212,13 +237,23 @@ class Player(object):
             # self.moves.clear()
             # find_moves(self.squares, self.colour == 'white', self.moves,
             #     self.edge)
-            our_tree = TreeMove(our_token, self.edge)
-            our_move = our_tree.choose_move(self.squares, self.colour)
+            our_tree = TreeMove(our_token, self.edge, self.our_locs, self.opp_locs)
+            flag = True
+            if self.turns > 20:
+                for i in range(3,10,2):
+                    if self.lastTen[i] != self.lastTen[1]:
+                        flag = False
+                        break
+                for i in range(2,9,2):
+                    if self.lastTen[i] != self.lastTen[0]:
+                        flag = False
+                        break
+            if ((flag == False) or (self.turns <= 20)):
+                our_move = our_tree.choose_move(self.squares, self.colour)
+            else:
+                our_move = our_tree.choose_move(self.squares, self.colour, self.lastTen[1])
             self.update(our_move, self.colour)
-            # print("our pieces: " + str(temp.our_pieces(self.squares)))
-            # print("opp pieces: " + str(temp.opp_pieces(self.squares)))
-            # print("our corners: " + str(temp.our_corners(self.squares)))
-            # print("opp corners: " + str(temp.opp_corners(self.squares)))
-            # print("surroundings: " + str(temp.surr_area_comp(self.squares)))
-            # print_board(self.squares)
+
+            self.lastTen.pop()
+            self.lastTen = [our_move] + self.lastTen
             return our_move
