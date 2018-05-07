@@ -1,8 +1,8 @@
 from copy import *
 import operator
 
-black_cffs = [25, -15, -4, 4, 2, 3, 10, 5, -100, 75, -75]
-white_cffs = [25, -15, -4, 4, 2, 3, 10, 5, -100, 75, -75]
+black_cffs = [25, -15, -4, 4, 2, 3, 10, 5, -100, 75, -50]
+white_cffs = [25, -15, -4, 4, 2, 3, 10, 5, -100, 75, -50]
 
 """
 This function flattens the board 2d array into a hashable string.
