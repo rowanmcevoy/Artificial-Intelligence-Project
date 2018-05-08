@@ -1,8 +1,15 @@
 from copy import *
 import operator
 
-black_cffs = [25, -15, -4, 4, 2, 3, 10, 5, -100, 75, -75]
-white_cffs = [25, -15, -4, 4, 2, 3, 10, 5, -100, 75, -75]
+# ----- moving phase coefficients
+# (0)our_pieces, (1)opp_pieces, (2)our_corners, (3)opp_corners,
+# (4)dist_from_edge, (5)surr_area_comp
+#
+# ----- placement phase coefficients
+# (6)dist_from_edge, (7)surr_area_comp, (8)our_pieces_eliminated,
+# (9)opp_pieces_eliminated, (10)threats, (11)have_backup
+black_cffs = [25, -15, -4, 4, 2, 3, 10, 5, -100, 75, -50, 50]
+white_cffs = [25, -15, -4, 4, 2, 3, 10, 5, -100, 75, -50, 50]
 
 """
 This function flattens the board 2d array into a hashable string.
@@ -465,13 +472,13 @@ def placement_value(board, token, x, y):
         return white_cffs[6]*dist_from_edge(x, y) + white_cffs[7]*surr_area_comp(board, token, x, y) \
         + white_cffs[8]*our_pieces_eliminated(board, token, x, y) \
         + white_cffs[9]*opp_pieces_eliminated(board, token, x, y) \
-        + white_cffs[10]*threats(board, token, x, y)
+        + white_cffs[10]*threats(board, token, x, y) + white_cffs[11]*have_backup(board, token, x, y)
 
     else:
         return black_cffs[6]*dist_from_edge(x, y) + black_cffs[7]*surr_area_comp(board, token, x, y) \
         + black_cffs[8]*our_pieces_eliminated(board, token, x, y) \
         + black_cffs[9]*opp_pieces_eliminated(board, token, x, y) \
-        + black_cffs[10]*threats(board, token, x, y)
+        + black_cffs[10]*threats(board, token, x, y) + black_cffs[11]*have_backup(board, token, x, y)
 
 
 def dist_from_edge(x, y):
@@ -572,5 +579,34 @@ def threats(board, token, c, d):
         if board[c][d+1] == opp_token:
             if (d-1 >= 0):
                 if board[c][d-1] == '-':
+                    counter = counter + 1
+    return counter
+
+def have_backup(board, token, c, d):
+    our_token = token
+    opp_token = '@'
+    if (our_token == '@'):
+        opp_token = 'O'
+
+    counter = 0
+    if (c-1 >= 0):
+        if (board[c-1][d] == opp_token):
+            if (c+1 <= 7):
+                if board[c+1][d] == our_token:
+                    counter = counter + 1
+    if (c+1 <= 7):
+        if board[c+1][d] == opp_token:
+            if (c-1 >= 0):
+                if board[c-1][d] == our_token:
+                    counter = counter + 1
+    if (d-1 >= 0):
+        if (board[c][d-1] == opp_token):
+            if (d+1 <= 7):
+                if board[c][d+1] == our_token:
+                    counter = counter + 1
+    if (d+1 <= 7):
+        if board[c][d+1] == opp_token:
+            if (d-1 >= 0):
+                if board[c][d-1] == our_token:
                     counter = counter + 1
     return counter
