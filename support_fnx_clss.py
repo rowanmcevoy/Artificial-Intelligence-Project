@@ -1,6 +1,7 @@
 from copy import *
 import operator
 
+<<<<<<< HEAD
 # ----- moving phase coefficients
 # (0)our_pieces, (1)opp_pieces, (2)our_corners, (3)opp_corners,
 # (4)dist_from_edge, (5)surr_area_comp
@@ -10,6 +11,10 @@ import operator
 # (9)opp_pieces_eliminated, (10)threats, (11)have_backup
 black_cffs = [25, -15, -4, 4, 2, 3, 10, 5, -100, 75, -50, 50]
 white_cffs = [25, -15, -4, 4, 2, 3, 10, 5, -100, 75, -50, 50]
+=======
+black_cffs = [25, -15, -4, 4, 2, 3, 10, 5, -100, 75, -50]
+white_cffs = [25, -15, -4, 4, 2, 3, 10, 5, -100, 75, -50]
+>>>>>>> 5a06133c9d4f01ca894171ce2ec76f88c554cbbe
 
 """
 This function flattens the board 2d array into a hashable string.
