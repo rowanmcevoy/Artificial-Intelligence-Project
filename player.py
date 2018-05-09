@@ -47,6 +47,8 @@ class Player(object):
 
         self.lastTen = [None]*10
 
+        self.placeMirror = (0,0)
+
     def removePiece(self, token, x, y):
         if ((token == 'O') and (self.colour == 'white')):
             self.our_locs.discard((x,y))
@@ -150,7 +152,7 @@ class Player(object):
             our_token = '@'
             opp_token = 'O'
 
-        if (self.numPlacements == 24):
+        if (self.numPlacements >= 24):
             (a,b), (c,d) = action
             self.squares[c][d] = self.squares[a][b]
             self.squares[a][b] = "-"
@@ -161,6 +163,8 @@ class Player(object):
             (c, d) = action
             self.squares[c][d] = our_token
             self.addPiece(our_token, c, d)
+            if (identity == self.opp_colour):
+                self.placeMirror = ((7-c,7-d))
 
         #eliminating opponent pieces
         if (c-1 >= 7 - self.edge):
@@ -228,16 +232,17 @@ class Player(object):
 
         #placing stage
         if (self.numPlacements != 24):
-            our_move = choose_placement(self.squares, self.colour)
+            # if (self.colour == 'black'):
+            #     our_move = self.placeMirror
+            # else:
+            our_tree = TreePlace(our_token, self.our_locs, self.opp_locs, self.turns)
+            our_move = our_tree.choose_placement(self.squares, self.colour)
             self.update(our_move, self.colour)
             return our_move
 
         #moving stage
         else:
-            # self.moves.clear()
-            # find_moves(self.squares, self.colour == 'white', self.moves,
-            #     self.edge)
-            our_tree = TreeMove(our_token, self.edge, self.our_locs, self.opp_locs)
+            our_tree = TreeMove(our_token, self.edge, self.our_locs, self.opp_locs, self.turns)
             flag = True
             if self.turns > 20:
                 for i in range(3,10,2):
