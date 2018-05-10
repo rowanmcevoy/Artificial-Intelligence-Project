@@ -1,5 +1,6 @@
 from copy import *
 import operator
+import sys
 
 
 # ----- moving phase coefficients
@@ -8,9 +9,27 @@ import operator
 #
 # ----- placement phase coefficients
 # (4)dist_from_edge, (0)our_pieces,
-# (1)opp_pieces, (5)threats, (6)have_backup
-black_cffs = [25, -15, -4, 4, 2, -5, 5, -10]
-white_cffs = [25, -15, -4, 4, 2, -5, 5, -10]
+# (1)opp_pieces, (5)threats, (6)have_backup, (8)key_squares
+
+# black_cffs = [25, 25, 4, 4, 5, 10, 12, 15, 4]
+# white_cffs = [25, 25, 4, 4, 5, 10, 12, 15, 4]
+
+#champ
+black_cffs = [0.37486,0.52731,0.6116,0.0316,0.03986,0.64395,0.18282,0.07462,0.7611]
+white_cffs = [0.493486667,0.728041667,0.51556,0.338151667,0.167121667,0.559725,0.225133333,0.357053333,0.694298333]
+#challenger
+# black_cffs = [0.89677,0.44422,0.99009,0.3619,0.53794,0.40805,0.42854,0.75282,0.48319]
+
+# our_file = open("results.txt", "r+")
+#
+# for line in reversed(our_file.readlines()):
+#     tempLine = line
+#     break
+#
+# # for i in range(9):
+# #     white_cffs.append(float(line[8*i:8*(i+1)-1]))
+# for i in range(9,18):
+#     black_cffs.append(float(line[8*i:8*(i+1)-1]))
 
 
 """
@@ -166,13 +185,13 @@ class TreeMove:
 
     def calc_h(self, board):
         if (self.token == 'O'):
-            return (white_cffs[0]*self.our_pieces(board) + white_cffs[1]*self.opp_pieces(board) \
-            + white_cffs[2]*self.our_corners(board) + white_cffs[3]*self.opp_corners(board) \
-            + white_cffs[4]*self.dist_from_edge(board) + white_cffs[7]*self.on_edge(board))
+            return (white_cffs[0]*self.our_pieces(board) - white_cffs[1]*self.opp_pieces(board) \
+            - white_cffs[2]*self.our_corners(board) + white_cffs[3]*self.opp_corners(board) \
+            + white_cffs[4]*self.dist_from_edge(board) - white_cffs[7]*self.on_edge(board))
         else:
-            return (black_cffs[0]*self.our_pieces(board) + black_cffs[1]*self.opp_pieces(board) \
-            + black_cffs[2]*self.our_corners(board) + black_cffs[3]*self.opp_corners(board) \
-            + black_cffs[4]*self.dist_from_edge(board) + black_cffs[7]*self.on_edge(board))
+            return (black_cffs[0]*self.our_pieces(board) - black_cffs[1]*self.opp_pieces(board) \
+            - black_cffs[2]*self.our_corners(board) + black_cffs[3]*self.opp_corners(board) \
+            + black_cffs[4]*self.dist_from_edge(board) - black_cffs[7]*self.on_edge(board))
 
     def our_pieces(self, board):
         return len(self.our_locs)
@@ -497,12 +516,19 @@ class TreePlace:
         else:
             self.opp_locs.add((x,y))
 
+    def calc_priority(self, board, c, d):
+        self.runningPlaces.append((c,d))
+        self.execute_place(board)
+        tempVal = self.placement_value(board)
+        self.undo_place(board)
+        return tempVal
+
     def mini(self, board, depth, alpha, beta):
         moves = {}
         self.find_places(board, (self.opp_token == 'O'), moves)
         currBestPlace = None
         currBestVal = float("inf")
-        if depth < 2:
+        if depth < 5:
             counter = 0
             for move in sorted(moves, key=moves.get, reverse = False):
                 self.runningPlaces.append(move)
@@ -518,9 +544,9 @@ class TreePlace:
                     return currBestVal
                 beta = min(beta, currBestVal)
 
-                # if counter > 10:
-                #     break
-                # counter = counter + 1
+                if counter > 10:
+                    break
+                counter = counter + 1
         else:
             for move in moves:
                 self.runningPlaces.append(move)
@@ -539,7 +565,7 @@ class TreePlace:
         self.find_places(board, (self.opp_token == '@'), moves)
         currBestPlace = None
         currBestVal = -float("inf")
-        if depth < 2:
+        if depth < 5:
             counter = 0
             for move in sorted(moves, key=moves.get, reverse = True):
                 self.runningPlaces.append(move)
@@ -555,9 +581,9 @@ class TreePlace:
                     return currBestVal
                 alpha = max(alpha, currBestVal)
 
-                # if counter > 10:
-                #     break
-                # counter = counter + 1
+                if counter > 10:
+                    break
+                counter = counter + 1
         else:
             for move in moves:
                 self.runningPlaces.append(move)
@@ -662,14 +688,34 @@ class TreePlace:
             for x in range(0,8):
                 for y in range(0,6):
                     if (board[x][y] == '-'):
-                        moves.update({(x,y):self.placement_value(board)})
+                        moves.update({(x,y):self.calc_priority(board, x, y)})
         else:
             for x in range(0,8):
                 for y in range(2,8):
                     if (board[x][y] == '-'):
-                        moves.update({(x,y):self.placement_value(board)})
+                        moves.update({(x,y):self.calc_priority(board, x, y)})
 
     def choose_placement(self, board, colour):
+        if (len(self.our_locs) == 0):
+            if (colour == 'white'):
+                return (3,4)
+            elif board[3][4] == 'O':
+                return (4,3)
+            elif board[3][3] == 'O':
+                return (4,4)
+            elif board[4][4] == 'O':
+                return (3,3)
+            elif board[4][3] == 'O':
+                return (3,4)
+
+        if (len(self.opp_locs) == 2 and colour == 'black'):
+            if board[3][4] == 'O' and board[4][2] == 'O' and board[4][3] == '@':
+                return(3,5)
+            elif board[4][4] == 'O' and board[3][2] == 'O' and board[3][3] == '@':
+                return(4,5)
+
+        # if (len(self.opp_locs) == 3 and colour == 'black'):
+
         moves = {}
         self.find_places(board, (colour == 'white'), moves)
         currBestPlace = None
@@ -681,11 +727,11 @@ class TreePlace:
             tempVal = self.mini(board, 1, -float("inf"), float("inf"))
             self.undo_place(board)
 
-            if (tempVal > currBestVal) or (currBestPlace == None):
+            if (tempVal >= currBestVal) or (currBestPlace == None):
                 currBestVal = tempVal
                 currBestPlace = move
 
-            if counter > 20:
+            if counter > 15:
                 break
             counter = counter + 1
 
@@ -695,13 +741,14 @@ class TreePlace:
     def placement_value(self, board):
         if (self.token == 'O'):
             return white_cffs[4]*self.dist_from_edge(board) \
-            + white_cffs[0]*self.our_pieces(board) + white_cffs[1]*self.opp_pieces(board) \
-            + white_cffs[5]*self.threats(board) + white_cffs[6]*self.have_backup(board)
-
+            + white_cffs[0]*self.our_pieces(board) - white_cffs[1]*self.opp_pieces(board) \
+            - white_cffs[5]*self.threats(board) + white_cffs[6]*self.have_backup(board) \
+            + white_cffs[8]*self.key_squares(board)
         else:
             return black_cffs[4]*self.dist_from_edge(board) \
-            + black_cffs[0]*self.our_pieces(board) + black_cffs[1]*self.opp_pieces(board) \
-            + black_cffs[5]*self.threats(board) + black_cffs[6]*self.have_backup(board)
+            + black_cffs[0]*self.our_pieces(board) - black_cffs[1]*self.opp_pieces(board) \
+            - black_cffs[5]*self.threats(board) + black_cffs[6]*self.have_backup(board) \
+            + black_cffs[8]*self.key_squares(board)
 
 
     def dist_from_edge(self, board):
@@ -729,6 +776,11 @@ class TreePlace:
 
     def threats(self, board):
         counter = 0
+        if self.token == 'O':
+            safeRange = [0,1]
+        else:
+            safeRange = [6,7]
+
         for (c,d) in self.our_locs:
             if (c-1 >= 0):
                 if (board[c-1][d] == self.opp_token):
@@ -744,16 +796,23 @@ class TreePlace:
                 if (board[c][d-1] == self.opp_token):
                     if (d+1 <= 7):
                         if board[c][d+1] == '-':
-                            counter = counter + 1
+                            if (self.token == 'O' or ((d+1) not in safeRange)):
+                                counter = counter + 1
             if (d+1 <= 7):
                 if board[c][d+1] == self.opp_token:
                     if (d-1 >= 0):
                         if board[c][d-1] == '-':
-                            counter = counter + 1
+                            if (self.token == '@' or ((d-1) not in safeRange)):
+                                counter = counter + 1
         return counter
 
     def have_backup(self, board):
         counter = 0
+        if self.token == 'O':
+            safeRange = [0,1]
+        else:
+            safeRange = [6,7]
+
         for (c,d) in self.our_locs:
             if (c-1 >= 0):
                 if (board[c-1][d] == self.opp_token):
@@ -768,11 +827,31 @@ class TreePlace:
             if (d-1 >= 0):
                 if (board[c][d-1] == self.opp_token):
                     if (d+1 <= 7):
-                        if board[c][d+1] == self.token:
+                        if (board[c][d+1] == self.token) or ((d+1) in safeRange and self.token == '@'):
                             counter = counter + 1
             if (d+1 <= 7):
                 if board[c][d+1] == self.opp_token:
                     if (d-1 >= 0):
-                        if board[c][d-1] == self.token:
+                        if (board[c][d-1] == self.token) or ((d-1) in safeRange and self.token == 'O'):
                             counter = counter + 1
+        return counter
+
+    def key_squares(self, board):
+        counter = 0
+        if board[3][3] == self.token:
+            counter = counter + 1
+        elif board[3][3] == self.opp_token:
+            counter = counter - 1
+        if board[3][4] == self.token:
+            counter = counter + 1
+        elif board[3][4] == self.opp_token:
+            counter = counter - 1
+        if board[4][3] == self.token:
+            counter = counter + 1
+        elif board[4][3] == self.opp_token:
+            counter = counter - 1
+        if board[4][4] == self.token:
+            counter = counter + 1
+        elif board[4][4] == self.opp_token:
+            counter = counter - 1
         return counter

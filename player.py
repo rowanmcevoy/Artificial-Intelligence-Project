@@ -14,7 +14,6 @@ from numpy import *
 #
 # importlib.import_module('support_fnx_clss.py')
 
-
 """
 This function reads the file input and calls either massacre or moves.
 
