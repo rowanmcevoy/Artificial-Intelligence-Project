@@ -11,9 +11,10 @@ import sys
 # -- placement phase coefficients
 # (4)dist_from_edge, (0)our_pieces,
 # (1)opp_pieces, (5)threats, (6)have_backup, (8)key_squares
-white_cffs = [0.3749,0.5273,0.6116,0.0316,0.0399,0.6440,0.3163,0.4732,0.7611]
-black_cffs = [0.3749,0.5273,0.6116,0.0316,0.0399,0.6440,0.3163,0.4732,0.7611]
+white_cffs = [0.5273,0.5273,0.6116,0.0316,0.0399,0.6440,0.3163,0.4732,0.7611]
+black_cffs = [0.5273,0.5273,0.6116,0.0316,0.0399,0.6440,0.3163,0.4732,0.7611]
 
+# 0.3749
 # ----- used in learning -----
 # our_file = open("results.txt", "r+")
 #
