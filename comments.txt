@@ -1,41 +1,122 @@
-1. For calculating the number of moves, the time complexity is
-O(boardSize + 4*numberOfPieces*boardSize + numberOfPieces) which is
-O(numberOfPieces*boardSize). Because the board is a 2d array, the simplified
-runtime is O(m*n^2), where m is the number of pieces and n is the side length
-of the board. To find the number of moves, we first create all the moves and
-then count them. Creating the moves is done through the find_moves function
-which iterates through the board (hence the first term in our equation). The
-find_moves function calls the generate_move function a maximum of 4 times
-whenever a piece is found. The generate_move function itself, in creating a
-new board, iterates through the original board. The last term in our equation
-comes from the time taken to calculate the size of a dictionary of moves.
+NOTE: Our main player is player.py and this is the one that should be tested.
+This module uses the support functions from support_fnx_clss.py. This file
+includes all of the placement and move calculations. We built a player that
+placed and moved its pieces randomly (player_random.py) in order to test our
+main player. We duplicated and then modified the referee.py file
+(referee_changed.py), but only to assist us in running our learning script
+(learn.sh). The results.xlsx file contains all of the training data we
+generated to optimize the weights of our heuristic function.
 
-For calculating the number of moves, the space complexity is
-O(boardSize + 4*numberOfPieces*boardSize) which is O(numberOfPieces*boardSize).
-Because the board is a 2d array, the simplified space complexity is O(m*n^2),
-where m is the number of pieces and n is the side length of the board. We use a
-dictionary to store all of the moves possible. This has a maximum size of
-4*numberOfPieces, each of which stores a new board configuration.
+----------MAJOR MODULES----------
+The major module that we created is player.py. This contains the Player class.
+The Player class itself keeps track of the playing board, as well as the
+locations of its own pieces and opponent pieces in sets. The Player class also
+deals with shrinking the board. The action and update methods are contained
+here as well (called by the referee).
 
-2. Our solution to massacre is done using Iterative Deepening Search. We use a
-list as a stack to store all moves on a current path. We also use a set of
-visited board configurations to make sure we do not check the same
-configuration twice. Elements in this set are strings of a flattened board
-configuration appended by the depth at which they were reached.
+To achieve this, the player class utilizes the support_fnx_clss.py file. This
+file contains two major classes: TreeMove and TreePlace. TreeMove builds a
+minimax tree with alpha-beta pruning for the moving phase. TreePlace builds a
+minimax tree with alpha-beta pruning for the placing phase. Each of these
+classes contains the functions that determine the action Player takes. The
+Change class is used to keep track of each change on the board when looking
+ahead (any piece movement/placement or elimination). This class allows us to
+execute and undo potential moves in the minimax tree.
 
-Our search algorithm looks at all possible moves and the resulting boards up to
-a given depth. We check to see if the resulting board configuration has all of
-the black pieces eliminated. If not, we continue to create more boards based
-off of the previous board configurations. This is an uninformed search
-algorithm and does not use a heuristic.
+----------APPROACH AND CREATIVITY----------
+*Search Strategy*
+When deciding which actions to take, our Player utilizes the Minimax algorithm
+with alpha-beta (as well as manual) pruning. We prioritized every option based
+on its immediate heuristic (only on current level) and manually pruned by only
+evaluating the top 10 actions. While this limits our search space, it also
+allows us to look much deeper into the tree without sacrificing much time.
 
-The branching factor of our search tree is at most 4*numberOfWhitePieces.
-Alternatively, it is the number of possible white moves from a given board
-configuration.
+*Evaluation Function*
+While observing the Player play the game in its early stages, we developed
+heuristics for calculating the strength of a given board position. These
+heuristics include the number of our pieces (our_pieces), the number of
+opponent pieces (opp_pieces), our pieces pushed against a corner (our_corners),
+opponent pieces pushed against a corner (opp_corners), distance from edge
+(dist_from_edge), threats to our pieces (threats), pieces directly next to an
+opponent piece but safe from elimination (have_backup), pieces that are in
+danger of being eliminated by an upcoming shrink (on_edge), and the composition
+of the four central squares (key_squares).
 
-The maximum search depth that our algorithm searches is 6. For this portion of
-the project, we should only search to a depth of 5 given that all input boards
-have a solution of 5 moves or less.
+The placement and movement phases use different combinations of the
+aforementioned factors. Each factor has a unique weight between 0 and 1. At
+first, we manually tweaked the coefficients, but resorted to machine learning
+to optimize the values.
 
-Our algorithm always returns the shortest possible solution, since it checks
-all possible board configurations at each depth before moving on to the next.
+*Machine Learning*
+Our machine learning strategy resembles evolutionary learning. To accomplish
+this, we wrote a script (learn.sh) that would run our program against a
+different version of itself (both with random weights) and build up training
+data. We analyzed this training data by first writing it to a text file and
+then importing that to an excel spreadsheet. The first generation of learning
+consisted of a sample of approximately 500 games. We averaged the coefficients
+of winning players to create a more formidable opponent for the following
+generation.
+
+In generation two, we ran our player with random coefficients against the
+champion from generation one. The sample size of this generation was 100,
+and we collected all of the players that defeated the generation one champion,
+averaging their heuristics to create the champion of generation two.
+
+In generation three, we ran the same process as generation two. Once we had our
+new sample of winners, we played them against each other to further optimize
+our parameters. From the 100 games played, 19 players defeated the generation
+two champion and from these players, one emerged as superior in head-to-head
+play. This player was used as the new champion. We logically analyzed the
+weights that defined this player and decided to use its first four weights
+for all future players, shrinking our search space.
+
+In generation four, we ran 74 new games against our champion from generation
+three. These new players had the same first four weights as the reigning
+champion, but the last five weights were randomized. From this sample of 74
+games, eight defeated the old champion. From these eight, one emerged as
+superior from head-to-head play.
+
+In generation five, we ran 69 new games against our champion from generation
+four. Our generation four champion performed poorly, losing 26 games. From
+these 26 games, we averaged the coefficients of the winners. We decided to test
+this new player against our generation three champion, which seemed to be the
+most successful player so far. This game was inconclusive, so we analyzed the
+weights of these two players. We took some of the weights of the generation five
+average champion that made it successful, and replaced the corresponding
+weights from the generation three champion with these values. This new player
+defeated all of the champions from all generations, making it the strongest
+player. The weights of this player are the ones we now use in our finalized
+module.
+
+*Data Structures*
+To save memory, we only ever created a single board. The board is passed around
+by reference through all classes and functions. Because this board is frequently
+changed when looking ahead in the minimax tree, both TreeMove and TreePlace
+store changes made to the board in an array. Storing these changes takes much
+less space than storing a new board. The changes are undone when we backtrack
+through the tree.
+
+To save time, we store sets of the locations of all our pieces and all opponent
+pieces. This prevents us from iterating through the entire board when evaluating
+our heuristics. Iterating through the entire board would mean iterating through
+a 2D array (at most 60 spaces), while passing location sets as parameters only
+requires iterating through at most 12 items (since that's the maximum number of
+pieces any player can have).
+
+*Preset Opening Moves*
+After playing enough games, we noticed a pattern of strong opening moves. To
+guarantee these first few moves, we hardcoded a few patterns into TreePlace.
+This also saves our program time, as it does not search in the beginning of the
+placement phase.
+
+We noticed that holding the central area of the board was more conducive to
+winning. Therefore, our preset moves aim to capture this area early on. For
+example, if an opponent places their piece in a central location, our player
+places its piece in the diagonally opposite square (also in the central area).
+
+*Other Ideas*
+We tried to implement a black player that would mirror its opponent's actions
+during the placement phase. While this quickly produced very close games and
+required very little time to run, this player consistently lost the game
+anyways. This was because by mirroring the opponent, the black player could
+never gain an advantage. We ended up not utilizing this strategy.

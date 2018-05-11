@@ -1,0 +1,41 @@
+1. For calculating the number of moves, the time complexity is
+O(boardSize + 4*numberOfPieces*boardSize + numberOfPieces) which is
+O(numberOfPieces*boardSize). Because the board is a 2d array, the simplified
+runtime is O(m*n^2), where m is the number of pieces and n is the side length
+of the board. To find the number of moves, we first create all the moves and
+then count them. Creating the moves is done through the find_moves function
+which iterates through the board (hence the first term in our equation). The
+find_moves function calls the generate_move function a maximum of 4 times
+whenever a piece is found. The generate_move function itself, in creating a
+new board, iterates through the original board. The last term in our equation
+comes from the time taken to calculate the size of a dictionary of moves.
+
+For calculating the number of moves, the space complexity is
+O(boardSize + 4*numberOfPieces*boardSize) which is O(numberOfPieces*boardSize).
+Because the board is a 2d array, the simplified space complexity is O(m*n^2),
+where m is the number of pieces and n is the side length of the board. We use a
+dictionary to store all of the moves possible. This has a maximum size of
+4*numberOfPieces, each of which stores a new board configuration.
+
+2. Our solution to massacre is done using Iterative Deepening Search. We use a
+list as a stack to store all moves on a current path. We also use a set of
+visited board configurations to make sure we do not check the same
+configuration twice. Elements in this set are strings of a flattened board
+configuration appended by the depth at which they were reached.
+
+Our search algorithm looks at all possible moves and the resulting boards up to
+a given depth. We check to see if the resulting board configuration has all of
+the black pieces eliminated. If not, we continue to create more boards based
+off of the previous board configurations. This is an uninformed search
+algorithm and does not use a heuristic.
+
+The branching factor of our search tree is at most 4*numberOfWhitePieces.
+Alternatively, it is the number of possible white moves from a given board
+configuration.
+
+The maximum search depth that our algorithm searches is 6. For this portion of
+the project, we should only search to a depth of 5 given that all input boards
+have a solution of 5 moves or less.
+
+Our algorithm always returns the shortest possible solution, since it checks
+all possible board configurations at each depth before moving on to the next.

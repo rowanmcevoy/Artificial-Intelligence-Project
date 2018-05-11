@@ -335,7 +335,12 @@ class _Game:
             self.winner = 'W'
             self.phase = 'completed'
         elif (n_whites < 2 and n_blacks < 2) or self.turns > 250:
-            self.winner = 'D'
+            if n_whites > n_blacks:
+                self.winner = 'W'
+            elif n_blacks > n_whites:
+                self.winner = 'B'
+            else:
+                self.winner = 'D'
             self.phase = 'completed'
 
     def _invalidate(self, reason):
